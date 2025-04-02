@@ -5,6 +5,7 @@
 - [ ] Set up version control
 - [ ] Create documentation files
 - [ ] Define project dependencies
+- [ ] Select GUI framework (Tkinter/PyQt/Kivy)
 
 ## 🧠 Core Game Logic
 - [ ] Implement 15x15 grid system
@@ -15,6 +16,14 @@
   - [ ] All new words must connect to existing mosaic
   - [ ] Ensure all word connections are valid
 - [ ] Create letter distribution algorithm
+
+## 🎮 User Interface
+- [ ] Design main game board layout
+- [ ] Create letter bank display
+- [ ] Implement drag-and-drop letter placement
+- [ ] Design score tracking display
+- [ ] Add visual feedback for valid/invalid placements
+- [ ] Create game menu and controls
 
 ## 🎯 Scoring System
 - [ ] Implement base letter values (A=1, B=3, etc.)
@@ -46,11 +55,12 @@
 - [ ] Test scoring system accuracy
 - [ ] Validate word dictionary integration
 - [ ] Test game progression and flow
+- [ ] Test GUI functionality and responsiveness
 
 ## 💻 Optional Future Features
-- [ ] Develop GUI interface
 - [ ] Add dictionary integration
 - [ ] Implement save/load functionality
 - [ ] Create difficulty levels
 - [ ] Add achievements system
 - [ ] Implement time-based challenges
+- [ ] Add animations and visual effects
