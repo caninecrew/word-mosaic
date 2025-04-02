@@ -52,8 +52,13 @@ class WordMosaicApp(QMainWindow):
         # Create game board
         self.create_game_board()
         
-        # Create letter bank
-        self.create_letter_bank()
+        # Create letter bank widget and layout once
+        self.letter_bank_widget = QWidget()
+        self.letter_bank_layout = QHBoxLayout(self.letter_bank_widget)
+        self.layout.addWidget(self.letter_bank_widget)
+        
+        # Populate letter bank
+        self.populate_letter_bank()
         
         # Create control buttons
         self.create_control_buttons()
@@ -109,10 +114,13 @@ class WordMosaicApp(QMainWindow):
         # Add board to main layout
         self.layout.addWidget(board_widget)
         
-    def create_letter_bank(self):
-        """Create display for player's letters"""
-        letter_bank_widget = QWidget()
-        self.letter_bank_layout = QHBoxLayout(letter_bank_widget)
+    def populate_letter_bank(self):
+        """Populate the letter bank with player's current letters"""
+        # Clear existing widgets
+        while self.letter_bank_layout.count():
+            item = self.letter_bank_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
         
         # Add a label for the letter bank
         bank_label = QLabel("Your Letters:")
@@ -136,9 +144,6 @@ class WordMosaicApp(QMainWindow):
             
             self.letter_bank_layout.addWidget(tile)
             self.letter_tiles.append(tile)
-        
-        # Add letter bank to main layout
-        self.layout.addWidget(letter_bank_widget)
     
     def create_control_buttons(self):
         """Create game control buttons"""
@@ -165,12 +170,8 @@ class WordMosaicApp(QMainWindow):
     
     def refresh_letter_bank(self):
         """Refresh the letter bank display"""
-        # Clear existing letter bank
-        for i in reversed(range(self.letter_bank_layout.count())): 
-            self.letter_bank_layout.itemAt(i).widget().deleteLater()
-        
-        # Re-create letter bank
-        self.create_letter_bank()
+        # Instead of creating a new widget, just repopulate the existing one
+        self.populate_letter_bank()
     
     def refresh_board(self):
         """Refresh the board display based on game state"""

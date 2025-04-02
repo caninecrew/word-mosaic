@@ -387,6 +387,23 @@ class PlayerHand:
             
         return True
     
+    def shuffle_letters(self):
+        """
+        Shuffle the order of letters in the player's hand.
+
+        This doesn't change which letters the player has,
+        just rearranges their order in the display.
+
+        Returns:
+            bool: True if the shuffle was successful (hand not empty)
+        """
+        if not self.letter_order:
+            return False
+            
+        # Use Python's random module to shuffle the letter_order list
+        random.shuffle(self.letter_order)
+        return True
+
     def get_letter_values(self):
         """
         Get the point values for all letters in hand.
