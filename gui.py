@@ -253,7 +253,7 @@ class WordMosaicApp(QMainWindow):
                     else:
                         # Clear the cell if it's not a special tile
                         self.cells[(row, col)].setText("")
-                        self.cells[(row, col)].setStyleSheet("")
+                        self.cells[(row, col)].setStyleSheet("")  # Reset to default background
     
     def select_letter(self, letter, index):
         """
