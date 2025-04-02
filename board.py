@@ -7,7 +7,7 @@ class Board:
     The board is a grid of rows x cols cells where letters can be placed
     to form words. It includes special tiles that provide score multipliers.
     """
-    def __init__(self, rows, cols):
+    def __init__(self, rows, cols, db_path="dictionary.db"):
         """
         Initialize a new game board with the specified dimensions.
         
@@ -26,7 +26,7 @@ class Board:
         }
         self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Track if special tiles are occupied
         self.define_special_tiles() # Initialize special tiles
-        self.word_validator = WordValidator("dictionary.db") # Initialize the word validator
+        self.word_validator = WordValidator(db_path) # Initialize the word validator
     
     def define_special_tiles(self):
             """
