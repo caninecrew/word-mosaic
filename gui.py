@@ -286,20 +286,16 @@ class WordMosaicApp(QMainWindow):
         """
         try:
             # Get the words formed during the turn
-            words_formed = self.game_board.get_all_words()
+            words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
             
-            # Validate each word
-            invalid_words = []
-            for word in words_formed:
-                if not self.game_board.validate_word(word):
-                    invalid_words.append(word)
+            # Validate word positions
+            for word, positions in words_formed:
+                if not self.game_board.validate_word_positions(word, positions):
+                    self.status_bar.showMessage(f"Invalid word placement: {word}")
+                    return
             
-            if invalid_words:
-                self.status_bar.showMessage(f"Invalid words: {', '.join(invalid_words)}")
-                return
-            
-            # Calculate score for valid words
-            turn_score = self.game_board.calculate_score(words_formed)
+            # Calculate the turn score
+            turn_score = self.game_board.calculate_turn_score(words_formed)
             self.score += turn_score
             self.score_value.setText(str(self.score))
             
