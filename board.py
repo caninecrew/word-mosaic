@@ -602,6 +602,21 @@ class Board:
             final_score += (len(word) - 4) * 2
             
         return final_score
+    
+    def has_valid_moves(self, available_letters):
+        """
+        Check if there are any valid moves available with the given letters.
+        
+        Args:
+            available_letters (list): List of available letters
+            
+        Returns:
+            bool: True if valid moves exist, False otherwise
+        """
+        for letter in set(available_letters):  # Use set to avoid checking duplicates
+            if self.find_valid_placements(letter):
+                return True
+        return False
         
     def to_json(self):
         """Convert the board to a JSON-serializable dictionary."""
