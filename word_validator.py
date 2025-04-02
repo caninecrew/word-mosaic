@@ -58,3 +58,17 @@ class WordValidator:
             print(f"Error: Dictionary file '{dictionary_path}' not found.")
         except Exception as e:
             print(f"Error loading dictionary: {e}")
+
+    def suggest_words(self, word, max_suggestions=5):
+        """
+        Suggest similar words from the dictionary for an invalid word.
+        
+        Args:
+            word (str): The invalid word.
+            max_suggestions (int): Maximum number of suggestions to return.
+            
+        Returns:
+            list: A list of suggested words.
+        """
+        from difflib import get_close_matches
+        return get_close_matches(word.lower(), self.dictionary, n=max_suggestions)
