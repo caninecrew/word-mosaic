@@ -286,12 +286,12 @@ class WordMosaicApp(QMainWindow):
         """
         try:
             # Get the words formed during the turn
-            words_formed = self.game_board.get_words_formed()
+            words_formed = self.game_board.get_all_words()
             
             # Validate each word
             invalid_words = []
             for word in words_formed:
-                if not self.game_board.word_validator.validate_word(word):
+                if not self.game_board.validate_word(word):
                     invalid_words.append(word)
             
             if invalid_words:
@@ -310,7 +310,10 @@ class WordMosaicApp(QMainWindow):
             # Update the board and status
             self.refresh_board()
             self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
-        
+    
+        except Exception as e:
+            self.status_bar.showMessage(f"Error submitting word: {str(e)}")
+            
         except Exception as e:
             self.status_bar.showMessage(f"Error submitting word: {str(e)}")
 
