@@ -15,12 +15,17 @@ class Scoring:
     def apply_special_tiles(self, word, positions):
         pass
 
-    is_bingo(self, word)
+    def is_bingo(self, word):
+        pass
 
-    get_total_score(self, words)
+    def get_total_score(self, words):
+        pass
 
-    reset_score(self)
+    def reset_score(self):
+        pass
 
-    load_letter_score(self, letter_score_file)
+    def load_letter_score(self, letter_score_file):
+        pass
 
-    validate_word_positions(self, word, positions)
+    def validate_word_positions(self, word, positions):
+        pass
