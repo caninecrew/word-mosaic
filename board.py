@@ -87,17 +87,23 @@ class Board:
     
     def get_vertical_word(self, row, col):
         # Retrieve a word reading from top to bottom
-        if not self.is_valid_position(row, col):
+        if not self.is_valid_position(row, col) or not self.is_occupied(row, col):
             return ""
-        if not self.is_occupied(row, col): # Check if the position is occupied
-            return ""
+            
+        # Find start and end positions
         start_row = row # Start row for the word
         while start_row > 0 and self.is_occupied(start_row - 1, col): # Move up to find the start of the word
             start_row -= 1 # Check if the position is occupied
+            
         end_row = row # End row for the word
         while end_row < self.rows - 1 and self.is_occupied(end_row + 1, col): # Move down to find the end of the word
-            end_row += 1 # Move down to find the end of the word
-        return ''.join(self.board[start_row * self.cols + col:end_row * self.cols + col + 1]) # Extract the word from the board
+            end_row += 1 # Check if the position is occupied
+            
+        # Build the word letter by letter
+        word = "" # Initialize an empty string for the word
+        for r in range(start_row, end_row + 1): # Loop through the rows
+            word += self.board[r * self.cols + col] # Add each letter to the word
+        return word # Return the complete word
     
     def get_word_at_position(self, row, col, direction):
         # Extract a complete word given a position and direction
@@ -169,7 +175,22 @@ class Board:
             'center': self.center,
             'coverage': self.calculate_coverage()
         }
-        # Example usage: 
+    
+    def is_valid_placement(self, letter, row, col, first_play=False):
+        """Check if placing a letter follows all game rules."""
+        # Check basic requirements
+        if not self.is_valid_position(row, col) or self.is_occupied(row, col): # Check if the position is valid and not occupied
+            return False
+            
+        # First play must cross center
+        if first_play and (row != self.center[0] or col != self.center[1]): # Check if first play is at the center
+            return False
+            
+        # After first play, must connect to existing mosaic
+        if not first_play and not self.has_adjacent_letter(row, col):
+            return False
+            
+        return True
 
 if __name__ == "__main__":
     # Create a new game board and display it
@@ -181,4 +202,4 @@ if __name__ == "__main__":
     game.place_letter('C', 7, 9) # Place a third letter
 
     print(game) # Print the initial empty board
-        
+
