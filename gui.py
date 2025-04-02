@@ -12,7 +12,7 @@ from letter_bank import LetterBank, PlayerHand
 
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                            QGridLayout, QLabel, QFrame, QHBoxLayout, QStatusBar)
+                            QGridLayout, QLabel, QFrame, QHBoxLayout, QStatusBar, QPushButton)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
@@ -54,6 +54,9 @@ class WordMosaicApp(QMainWindow):
         
         # Create letter bank
         self.create_letter_bank()
+        
+        # Create control buttons
+        self.create_control_buttons()
     
     def create_score_display(self):
         """Create a simple score display"""
@@ -136,6 +139,29 @@ class WordMosaicApp(QMainWindow):
         
         # Add letter bank to main layout
         self.layout.addWidget(letter_bank_widget)
+    
+    def create_control_buttons(self):
+        """Create game control buttons"""
+        buttons_widget = QWidget()
+        buttons_layout = QHBoxLayout(buttons_widget)
+        
+        # Submit word button
+        submit_button = QPushButton("Submit Word")
+        submit_button.clicked.connect(self.submit_word)
+        buttons_layout.addWidget(submit_button)
+        
+        # Shuffle letters button
+        shuffle_button = QPushButton("Shuffle Letters")
+        shuffle_button.clicked.connect(self.shuffle_letters)
+        buttons_layout.addWidget(shuffle_button)
+        
+        # Reset turn button
+        reset_button = QPushButton("Reset Turn")
+        reset_button.clicked.connect(self.reset_turn)
+        buttons_layout.addWidget(reset_button)
+        
+        # Add buttons widget to main layout
+        self.layout.addWidget(buttons_widget)
     
     def refresh_letter_bank(self):
         """Refresh the letter bank display"""
