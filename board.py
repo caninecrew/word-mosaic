@@ -1,3 +1,5 @@
+from word_validator import WordValidator
+
 class Board:
     """
     Represents the game board for Word Mosaic.
@@ -24,6 +26,7 @@ class Board:
         }
         self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Track if special tiles are occupied
         self.define_special_tiles() # Initialize special tiles
+        self.word_validator = WordValidator() # Initialize the word validator
     
     def define_special_tiles(self):
             """
@@ -652,6 +655,43 @@ class Board:
             if self.find_valid_placements(letter):
                 return True
         return False
+    
+    def get_words_formed(self):
+        """
+        Retrieve all words formed during the current turn.
+        
+        Returns:
+            list: A list of words formed on the board
+        """
+        words = []
+        # Logic to extract words formed horizontally and vertically
+        for row in range(self.rows):
+            current_word = ""
+            for col in range(self.cols):
+                letter = self.get_letter(row, col)
+                if letter:
+                    current_word += letter
+                else:
+                    if len(current_word) > 1:
+                        words.append(current_word)
+                    current_word = ""
+            if len(current_word) > 1:
+                words.append(current_word)
+        
+        for col in range(self.cols):
+            current_word = ""
+            for row in range(self.rows):
+                letter = self.get_letter(row, col)
+                if letter:
+                    current_word += letter
+                else:
+                    if len(current_word) > 1:
+                        words.append(current_word)
+                    current_word = ""
+            if len(current_word) > 1:
+                words.append(current_word)
+        
+        return words
         
     def find_potential_words(self, available_letters, dictionary):
         """

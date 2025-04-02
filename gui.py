@@ -284,7 +284,35 @@ class WordMosaicApp(QMainWindow):
         Submit the current word and calculate the score.
         Validates the word, updates the score, and replenishes the player's hand.
         """
-        self.status_bar.showMessage("Word submitted successfully!")
+        try:
+            # Get the words formed during the turn
+            words_formed = self.game_board.get_words_formed()
+            
+            # Validate each word
+            invalid_words = []
+            for word in words_formed:
+                if not self.game_board.word_validator.validate_word(word):
+                    invalid_words.append(word)
+            
+            if invalid_words:
+                self.status_bar.showMessage(f"Invalid words: {', '.join(invalid_words)}")
+                return
+            
+            # Calculate score for valid words
+            turn_score = self.game_board.calculate_score(words_formed)
+            self.score += turn_score
+            self.score_value.setText(str(self.score))
+            
+            # Replenish player's hand
+            self.player_hand.refill(len(words_formed))
+            self.refresh_letter_bank()
+            
+            # Update the board and status
+            self.refresh_board()
+            self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
+        
+        except Exception as e:
+            self.status_bar.showMessage(f"Error submitting word: {str(e)}")
 
     def shuffle_letters(self):
         """
