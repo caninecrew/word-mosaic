@@ -131,39 +131,39 @@ class WordMosaicApp(QMainWindow):
         # Add board to main layout
         self.layout.addWidget(board_widget)
             
-        def populate_letter_bank(self):
-            """Populate the letter bank with player's current letters"""
-            # Clear existing widgets
-            while self.letter_bank_layout.count():
-                item = self.letter_bank_layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
+    def populate_letter_bank(self):
+        """Populate the letter bank with player's current letters"""
+        # Clear existing widgets
+        while self.letter_bank_layout.count():
+            item = self.letter_bank_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        
+        # Add a label for the letter bank
+        bank_label = QLabel("Your Letters:")
+        bank_label.setFont(QFont('Arial', 12))
+        self.letter_bank_layout.addWidget(bank_label)
+        
+        # Get actual letters from player hand
+        self.letter_tiles = []
+        player_letters = self.player_hand.letter_order
+        
+        for i, letter in enumerate(player_letters):
+            # Handle blank tiles explicitly
+            display_letter = "" if letter == "0" else letter.upper()
             
-            # Add a label for the letter bank
-            bank_label = QLabel("Your Letters:")
-            bank_label.setFont(QFont('Arial', 12))
-            self.letter_bank_layout.addWidget(bank_label)
+            tile = QLabel(display_letter)
+            tile.setFixedSize(35, 35)
+            tile.setAlignment(Qt.AlignCenter)
+            tile.setFrameShape(QFrame.Box)
+            tile.setFont(QFont('Arial', 12, QFont.Bold))
+            tile.setStyleSheet("background-color: #ffffcc;")
             
-            # Get actual letters from player hand
-            self.letter_tiles = []
-            player_letters = self.player_hand.letter_order
+            # Pass both the letter and its index to the select_letter method
+            tile.mousePressEvent = lambda event, l=letter, idx=i: self.select_letter(l, idx)
             
-            for i, letter in enumerate(player_letters):
-                # Handle blank tiles explicitly
-                display_letter = "" if letter == "0" else letter.upper()
-                
-                tile = QLabel(display_letter)
-                tile.setFixedSize(35, 35)
-                tile.setAlignment(Qt.AlignCenter)
-                tile.setFrameShape(QFrame.Box)
-                tile.setFont(QFont('Arial', 12, QFont.Bold))
-                tile.setStyleSheet("background-color: #ffffcc;")
-                
-                # Pass both the letter and its index to the select_letter method
-                tile.mousePressEvent = lambda event, l=letter, idx=i: self.select_letter(l, idx)
-                
-                self.letter_bank_layout.addWidget(tile)
-                self.letter_tiles.append(tile)
+            self.letter_bank_layout.addWidget(tile)
+            self.letter_tiles.append(tile)
     
     def create_control_buttons(self):
         """Create game control buttons"""
@@ -180,10 +180,12 @@ class WordMosaicApp(QMainWindow):
         shuffle_button.clicked.connect(self.shuffle_letters)
         buttons_layout.addWidget(shuffle_button)
         
+        """
         # Reset turn button
         reset_button = QPushButton("Reset Turn")
         reset_button.clicked.connect(self.reset_turn)
         buttons_layout.addWidget(reset_button)
+        """
         
         # Add buttons widget to main layout
         self.layout.addWidget(buttons_widget)
@@ -199,9 +201,28 @@ class WordMosaicApp(QMainWindow):
             for col in range(15):
                 letter = self.game_board.get_letter(row, col)
                 if letter:
+                    # Display the letter if present
                     self.cells[(row, col)].setText(letter.upper())
+                    self.cells[(row, col)].setStyleSheet("background-color: #ffffff;")  # Reset to default background
                 else:
-                    self.cells[(row, col)].setText("")
+                    # Check if the cell is a special tile
+                    special_tile = self.game_board.get_special_tile_multiplier(row, col)
+                    if special_tile == 'TW':
+                        self.cells[(row, col)].setText("TW")
+                        self.cells[(row, col)].setStyleSheet("background-color: #ff9999;")  # Triple Word
+                    elif special_tile == 'DW':
+                        self.cells[(row, col)].setText("DW")
+                        self.cells[(row, col)].setStyleSheet("background-color: #ffcc99;")  # Double Word
+                    elif special_tile == 'TL':
+                        self.cells[(row, col)].setText("TL")
+                        self.cells[(row, col)].setStyleSheet("background-color: #9999ff;")  # Triple Letter
+                    elif special_tile == 'DL':
+                        self.cells[(row, col)].setText("DL")
+                        self.cells[(row, col)].setStyleSheet("background-color: #99ccff;")  # Double Letter
+                    else:
+                        # Clear the cell if it's not a special tile
+                        self.cells[(row, col)].setText("")
+                        self.cells[(row, col)].setStyleSheet("")
     
     def select_letter(self, letter, index):
         """Handle letter selection from bank"""
@@ -263,6 +284,7 @@ class WordMosaicApp(QMainWindow):
         self.refresh_letter_bank()
         self.status_bar.showMessage("Letters shuffled")
 
+    '''
     def reset_turn(self):
         """Reset the current turn, returning placed letters to hand"""
         # Return all letters placed this turn to the player's hand
@@ -271,6 +293,8 @@ class WordMosaicApp(QMainWindow):
         self.refresh_board()
         self.refresh_letter_bank()
         self.status_bar.showMessage("Turn reset")
+    '''
+    
 
 # Main application entry point
 if __name__ == "__main__":

@@ -158,9 +158,10 @@ class Board:
             self.special_tiles_occupied[(row, col)] = False
 
     def reset_board(self):
-        """Clear all letters from the board and reset special tiles."""        
-        self.board = [' ' for _ in range(self.rows * self.cols)] # Reset the board to empty spaces
-        self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Reset special tiles
+        """Clear all letters from the board but keep special tiles."""
+        print(f"Before reset: {self.special_tiles_occupied}")
+        self.board = [' ' for _ in range(self.rows * self.cols)]  # Reset the board to empty spaces
+        print(f"After reset: {self.special_tiles_occupied}")
 
     def is_center_covered(self):
         """
