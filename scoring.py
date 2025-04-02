@@ -51,7 +51,33 @@ class Scoring:
         return word_score
 
     def calculate_turn_score(self, words):
-        pass
+        """
+        Calculate the total score for all words formed during a turn.
+
+        Args:
+            words (list): A list of tuples, where each tuple contains:
+                        - word (str): The word formed.
+                        - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+
+        Returns:
+            int: The total score for the turn.
+        """
+        turn_score = 0
+
+        for word, positions in words:
+            # Calculate the score for each word
+            word_score = self.calculate_word_score(word, positions)
+            self.word_scores[word] = word_score  # Store the score for the word
+            turn_score += word_score
+
+            # Check for bingo bonus
+            if self.is_bingo(word):
+                turn_score += self.bingo_bonus
+
+        # Update the total score
+        self.total_score += turn_score
+
+        return turn_score
 
     def get_letter_score(self, letter):
         pass
