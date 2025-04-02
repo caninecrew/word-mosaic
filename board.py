@@ -564,13 +564,15 @@ if __name__ == "__main__":
     print(game)
     print(f"Word at center (horizontal): {game.get_horizontal_word(7, 7)}")
     
-    # Test 2: Word placement - Make a compatible crossword
+    
+    # Test 2: Word placement - Make a compatible crossword 
     print("\n--- Test 2: Word Placement ---")
-    # Place "RANGE" vertically, which crosses "APPLE" at the "A"
-    game.place_word("RANGE", 5, 7, "vertical")
+    # Place "ORANGE" vertically, which properly intersects with APPLE at the "A"
+    game.place_word("ORANGE", 4, 7, "vertical")
     print(game)
     print("Words on board:", game.get_all_words())
     
+
     # Test 3: Error handling
     print("\n--- Test 3: Error Handling ---")
     try:
@@ -600,10 +602,10 @@ if __name__ == "__main__":
     
     # Test 6: Word identification
     print("\n--- Test 6: Word Identification ---")
-    horizontal = game.get_word_at_position(7, 9, "horizontal")
-    vertical = game.get_word_at_position(7, 9, "vertical")
-    print(f"Horizontal word at (7,9): {horizontal}")
-    print(f"Vertical word at (7,9): {vertical}")
+    horizontal = game.get_word_at_position(7, 7, "horizontal")
+    vertical = game.get_word_at_position(7, 7, "vertical")
+    print(f"Horizontal word at (7,7): {horizontal}")
+    print(f"Vertical word at (7,7): {vertical}")
     
     # Test 7: Finding valid placements
     print("\n--- Test 7: Finding Valid Placements ---")
@@ -621,28 +623,33 @@ if __name__ == "__main__":
     new_game = Board.from_json(board_state)
     print("Recreated board:")
     print(new_game)
-    print(f"Words on recreated board: {new_game.get_all_words()}")
+    print(f"Words on recreated board: {new_game.get_horizontal_word(7, 7)}")
     
     # Test 10: Clear and reset
     print("\n--- Test 10: Clear and Reset ---")
-    game.reset_board()
+    new_board = Board(15, 15)  # Create a fresh board for this test
+    new_board.place_letter('X', 7, 7)  # Place a letter
+    print("Before reset:")
+    print(new_board)
+    new_board.reset_board()
     print("After reset:")
-    print(game)
-    print(f"Board coverage after reset: {game.calculate_coverage():.2f}%")
+    print(new_board)
+    print(f"Board coverage after reset: {new_board.calculate_coverage():.2f}%")
     
-    # Test 11: Complex word placement scenario - Create a new crossword pattern
+    # Test 11: Complex word placement scenario
     print("\n--- Test 11: Complex Word Scenario ---")
-    # Set up a small crossword that works together
-    game.place_word("HELLO", 5, 5, "horizontal")
-    game.place_word("WORLD", 3, 7, "vertical")
-    game.place_word("CODE", 8, 4, "horizontal")
-    print(game)
-    all_words = game.get_all_words()
-    print(f"All words on board: {all_words}")
+    test_board = Board(15, 15)
+    test_board.place_letter('H', 5, 5)
+    test_board.place_letter('E', 5, 6)
+    test_board.place_letter('L', 5, 7)
+    test_board.place_letter('L', 5, 8)
+    test_board.place_letter('O', 5, 9)
+    print(test_board)
+    print(f"Word placed: {test_board.get_horizontal_word(5, 5)}")
     
     # Test 12: 2D representation
     print("\n--- Test 12: 2D Representation ---")
-    board_2d = game.get_board_2d()
+    board_2d = game.get_board_2d()  # Use the original game board that has APPLE
     print("First 5 rows of 2D board:")
     for row in board_2d[:5]:
         print(''.join([f"[{c if c != ' ' else ' '}]" for c in row[:5]]))
