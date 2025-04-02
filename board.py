@@ -54,6 +54,25 @@ class Board:
         # Check if the center position has a letter
         return self.is_occupied(self.center[0], self.center[1]) # Check if the center is occupied
     
+    def is_valid_position(self, row, col):
+        # Ensure coordinates are within bounds
+        return 0 <= row < self.rows and 0 <= col < self.cols # Check if the position is valid
+    
+    def has_adjacent_letter(self, row, col):
+        # Check if a position connects to existing letters
+        if not self.is_valid_position(row, col):
+            return False # Ensure the position is valid
+        # Check adjacent positions for letters
+        adjacent_positions = [
+            (row-1, col), (row+1, col), (row, col-1), (row, col+1) # Up, Down, Left, Right
+        ]
+        for r, c in adjacent_positions: # Loop through adjacent positions
+            if self.is_valid_position(r, c) and self.is_occupied(r, c): # Check if occupied
+                return True # Return True if any adjacent position has a letter
+        return False # Return False if no adjacent letters are found
+
+
+
 game = Board(15, 15) # Create a new game board
 print(game) # Print the initial empty board
         
