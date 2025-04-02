@@ -143,6 +143,16 @@ class Board:
         total_positions = self.rows * self.cols # Total number of positions on the board
         occupied_positions = len(self.get_occupied_positions()) # Count occupied positions
         return (occupied_positions / total_positions) * 100
+    
+    def find_valid_placements(self, letter):
+        # Identify legal positions for placing new letters
+        valid_positions = []
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if not self.is_occupied(row, col) and self.has_adjacent_letter(row, col):
+                    valid_positions.append((row, col))
+        return valid_positions
+    
 
 game = Board(15, 15) # Create a new game board
 print(game) # Print the initial empty board
