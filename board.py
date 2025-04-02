@@ -191,6 +191,25 @@ class Board:
             return False
             
         return True
+    
+    def is_valid_word_placement(self, word, row, col, direction):
+        """Check if an entire word can be validly placed."""
+        if direction not in ['horizontal', 'vertical']:
+            return False
+            
+        # Check if word fits on board
+        if direction == 'horizontal' and col + len(word) > self.cols:
+            return False
+        if direction == 'vertical' and row + len(word) > self.rows:
+            return False
+            
+        # Check if placement conflicts with existing letters
+        for i, letter in enumerate(word):
+            r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
+            if self.is_occupied(r, c) and self.get_letter(r, c) != letter:
+                return False
+                
+        return True
 
 if __name__ == "__main__":
     # Create a new game board and display it
