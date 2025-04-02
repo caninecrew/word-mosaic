@@ -89,7 +89,7 @@ class Board:
     def place_letter(self, letter, row, col):
         print(f"Placing letter '{letter}' at ({row}, {col})")
         print(f"Board dimensions: {self.rows}x{self.cols}")
-        print(f"Board state: {self.board}")
+        print(f"Before placement: {self.board[row]}")  # Print the row before placement
         """
         Place a letter on the board at the specified position.
 
@@ -123,6 +123,10 @@ class Board:
         # Update special tile status
         if (row, col) in self.special_tiles:
             self.special_tiles_occupied[(row, col)] = True
+        
+        self.board[row][col] = letter.upper() if letter != '0' else ''
+
+        print(f"After placement: {self.board[row]}")  # Print the row after placement
 
     def is_occupied(self, row, col):
         """
