@@ -26,7 +26,7 @@ class Board:
         }
         self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Track if special tiles are occupied
         self.define_special_tiles() # Initialize special tiles
-        self.word_validator = WordValidator() # Initialize the word validator
+        self.word_validator = WordValidator("dictionary.db") # Initialize the word validator
     
     def define_special_tiles(self):
             """
@@ -573,22 +573,15 @@ class Board:
     
     def validate_word(self, word):
         """
-        Check if a word is valid according to game rules.
-        
+        Check if a word is valid using the WordValidator.
+
         Args:
             word (str): The word to validate
-            
+
         Returns:
-            bool: True if the word is valid
-        
-        Raises:
-            TypeError: If word is not a string
+            bool: True if the word is valid, False otherwise
         """
-        if not isinstance(word, str):
-            raise TypeError("Word must be a string")
-        
-        # Check minimum length and all alphabetic characters
-        return len(word) >= 2 and word.isalpha()
+        return self.word_validator.validate_word(word)
     
     def calculate_word_score(self, word, row, col, direction):
         """
