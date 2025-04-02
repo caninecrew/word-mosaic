@@ -118,7 +118,7 @@ class WordMosaicApp(QMainWindow):
         
         # Get actual letters from player hand
         self.letter_tiles = []
-        player_letters = self.player_hand.add_letter()
+        player_letters = self.player_hand.letter_order
         
         for letter in player_letters:
             tile = QLabel(letter.upper())
@@ -128,8 +128,8 @@ class WordMosaicApp(QMainWindow):
             tile.setFont(QFont('Arial', 12, QFont.Bold))
             tile.setStyleSheet("background-color: #ffffcc;")
             
-            # Make letter tiles clickable
-            tile.mousePressEvent = lambda event, l=letter: self.select_letter(l)
+            # Fix the click event with proper lambda capture
+            tile.mousePressEvent = lambda event, letter=letter: self.select_letter(letter)
             
             self.letter_bank_layout.addWidget(tile)
             self.letter_tiles.append(tile)
