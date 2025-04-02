@@ -40,6 +40,17 @@ class Board:
         return board_str # Return the complete board string
     
     def place_letter(self, letter, row, col):
+        """
+        Place a letter on the board at the specified position.
+        
+        Args:
+            letter (str): The letter to place
+            row (int): Row position
+            col (int): Column position
+            
+        Raises:
+            ValueError: If the position is already occupied or invalid
+        """
         # Place a letter on the board at the specified position
         if self.is_occupied(row, col): # Check if the position is occupied
             raise ValueError("Position already occupied")
