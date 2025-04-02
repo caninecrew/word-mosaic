@@ -25,6 +25,12 @@ class Board:
         self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Track if special tiles are occupied
 
     def __str__(self):
+        """
+        Generate a string representation of the board.
+        
+        Returns:
+            str: A formatted string showing the current board state
+        """
         # Generate a string representation of the board for display
         board_str = '' # Initialize an empty string
         for i in range(self.rows): # Loop through each row
