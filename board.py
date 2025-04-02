@@ -189,14 +189,21 @@ class Board:
             return "" # Return empty string if invalid
         if not self.is_occupied(row, col): # Check if the position is occupied
             return "" # Return empty string if not occupied
+        
         start_col = col # Start column for the word
         while start_col > 0 and self.is_occupied(row, start_col - 1): # Move left to find the start of the word
             start_col -= 1 # Check if the position is occupied
+            
         end_col = col # End column for the word
         while end_col < self.cols - 1 and self.is_occupied(row, end_col + 1):
             end_col += 1 # Move right to find the end of the word
-        return ''.join(self.board[row * self.cols + start_col:end_col + 1]) # Extract the word from the board
-    
+            
+        # Build the word character by character (slice won't work properly with 1D array)
+        word = ""
+        for c in range(start_col, end_col + 1):
+            word += self.board[row * self.cols + c]
+        return word
+
     def get_vertical_word(self, row, col):
         """
         Retrieve a complete word reading vertically from the given position.
@@ -257,15 +264,28 @@ class Board:
         Returns:
             list: A list of unique words found on the board
         """
-        # Find all words on the board
+        # Find all words on the board (minimum length 2)
         words = []
-        for row in range(self.rows): # Loop through each row
-            for col in range(self.cols): # Loop through each column
+        visited_starts = set()  # Track starting positions we've already processed
+        
+        for row in range(self.rows):
+            for col in range(self.cols):
                 if self.is_occupied(row, col):
-                    # Get horizontal and vertical words
-                    words.append(self.get_horizontal_word(row, col)) # Add horizontal word
-                    words.append(self.get_vertical_word(row, col)) # Add vertical word
-        return list(set(words)) # Return unique words found
+                    # For horizontal words, only check if this is the leftmost letter
+                    left_empty = col == 0 or not self.is_occupied(row, col-1)
+                    if left_empty:
+                        h_word = self.get_horizontal_word(row, col)
+                        if len(h_word) >= 2:  # Only add words with 2+ letters
+                            words.append(h_word)
+                    
+                    # For vertical words, only check if this is the topmost letter
+                    top_empty = row == 0 or not self.is_occupied(row-1, col)
+                    if top_empty:
+                        v_word = self.get_vertical_word(row, col)
+                        if len(v_word) >= 2:  # Only add words with 2+ letters
+                            words.append(v_word)
+                            
+        return words
     
     def get_words_formed(self, row, col, letter):
         """
