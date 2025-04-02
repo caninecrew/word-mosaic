@@ -1,7 +1,7 @@
 # Word Mosaic – To-Do List
 
 ## 📦 Project Setup
-- [ ] Initialize Python project structure
+- [X] Initialize Python project structure
 - [ ] Set up version control
 - [ ] Create documentation files
 - [ ] Define project dependencies
