@@ -96,6 +96,9 @@ class WordMosaicApp(QMainWindow):
                 if row == 7 and col == 7:
                     cell.setStyleSheet("background-color: #ffcccc;")
                     
+                # Add click event
+                cell.mousePressEvent = lambda event, r=row, c=col: self.place_letter(r, c)
+                
                 # Store cell reference and add to layout
                 self.cells[(row, col)] = cell
                 board_layout.addWidget(cell, row, col)
@@ -133,6 +136,46 @@ class WordMosaicApp(QMainWindow):
         
         # Add letter bank to main layout
         self.layout.addWidget(letter_bank_widget)
+    
+    def select_letter(self, letter):
+        """Handle letter selection from bank"""
+        self.selected_letter = letter
+        self.status_bar.showMessage(f"Selected letter: {letter.upper()}")
+        
+        # Highlight the selected letter tile
+        for tile in self.letter_tiles:
+            if tile.text() == letter.upper():
+                tile.setStyleSheet("background-color: #ffcc66; border: 2px solid black;")
+            else:
+                tile.setStyleSheet("background-color: #ffffcc;")
+    
+    def place_letter(self, row, col):
+        """Handle letter placement on the board"""
+        if not hasattr(self, 'selected_letter') or not self.selected_letter:
+            self.status_bar.showMessage("Please select a letter first")
+            return
+            
+        try:
+            # Try to place the letter using your game logic
+            self.game_board.place_letter(self.selected_letter, row, col)
+            
+            # Update the visual board
+            self.cells[(row, col)].setText(self.selected_letter.upper())
+            
+            # Remove from player's hand
+            self.player_hand.remove_letter(self.selected_letter)
+            
+            # Clear selection
+            self.selected_letter = None
+            
+            # Update letter bank display
+            self.refresh_letter_bank()
+            
+            # Update status
+            self.status_bar.showMessage(f"Placed letter at position ({row}, {col})")
+            
+        except ValueError as e:
+            self.status_bar.showMessage(f"Invalid placement: {str(e)}")
 
 # Main application entry point
 if __name__ == "__main__":
