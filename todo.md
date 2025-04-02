@@ -8,7 +8,7 @@
 - [X] Select GUI framework (Tkinter/PyQt/Kivy) - PyQt5
 
 ## 🧠 Core Game Logic
-- [ ] Implement 15x15 grid system
+- [X] Implement 15x15 grid system
 - [ ] Create letter bank with 20 randomized letters based on frequency distributions
 - [ ] Develop word validation system
 - [ ] Implement placement rules:
