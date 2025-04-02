@@ -202,9 +202,34 @@ class LetterBank:
         return random.choice(letters) if letters else None
     
 class PlayerHand:
+    """
+    Represents a player's current set of letters in the Word Mosaic game.
+    
+    This class manages the collection of letters a player has available for
+    play, including adding, removing, and checking letters in the hand.
+    """
+
     def __init__(self):
         self.hand = {}
         self.hand_total = sum(self.hand.values()) # total number of tiles in the hand
+        self.letter_order = [] # order of letters in the hand for display purposes
 
-    
+    def add_letter(self, letter):
+        """
+        Add a letter to the player's hand.
+        
+        Args:
+            letter (str): The letter to add
+            
+        Returns:
+            bool: True if the letter was successfully added
+        """
+        if letter in self.hand:
+            self.hand[letter] += 1
+        else:
+            self.hand[letter] = 1
+        self.hand_total += 1
+        self.letter_order.append(letter)
+        return True
+
         
