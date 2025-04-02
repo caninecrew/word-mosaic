@@ -217,26 +217,30 @@ class WordMosaicApp(QMainWindow):
         if not hasattr(self, 'selected_letter') or not self.selected_letter:
             self.status_bar.showMessage("Please select a letter first")
             return
-            
+
         try:
             # Try to place the letter using your game logic
             self.game_board.place_letter(self.selected_letter, row, col)
-            
+
             # Update the visual board
             self.cells[(row, col)].setText(self.selected_letter.upper())
-            
+
+            # Mark special tile as occupied if applicable
+            if (row, col) in self.game_board.special_tiles:
+                self.game_board.special_tiles_occupied[(row, col)] = True
+
             # Remove from player's hand
             self.player_hand.remove_letter(self.selected_letter)
-            
+
             # Clear selection
             self.selected_letter = None
-            
+
             # Update letter bank display
             self.refresh_letter_bank()
-            
+
             # Update status
             self.status_bar.showMessage(f"Placed letter at position ({row}, {col})")
-            
+
         except ValueError as e:
             self.status_bar.showMessage(f"Invalid placement: {str(e)}")
     
