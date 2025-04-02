@@ -61,34 +61,82 @@ class Board:
             self.special_tiles_occupied[(row, col)] = True # Mark the special tile as occupied
 
     def is_occupied(self, row, col):
-        # Check if the specified position is occupied
-        return self.board[row * self.cols + col] != ' '
+        """
+        Check if the specified position is occupied by a letter.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            bool: True if position contains a letter, False otherwise
+        """
+        return self.board[row * self.cols + col] != ' ' # Check if the position is occupied
     
     def get_letter(self, row, col):
-        # Retrieve the letter at the specified position
+        """
+        Retrieve the letter at the specified position.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            str: The letter at the position, or None if position is invalid
+        """
         return self.board[row * self.cols + col] if self.is_valid_position(row, col) else None
     
     def clear_position(self, row, col):
-        # Remove the letter from the specified position
+        """
+        Remove the letter from the specified position.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+        """
         if self.is_valid_position(row, col):
             self.board[row * self.cols + col] = ' '# Clear the position
         if (row, col) in self.special_tiles: # Check if it's a special tile
             self.special_tiles_occupied[(row, col)] = False # Mark the special tile as unoccupied
 
     def reset_board(self):
-        # Clear all letters from the board
+        """Clear all letters from the board and reset special tiles."""        
         self.board = [' ' for _ in range(self.rows * self.cols)] # Reset the board to empty spaces
         self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Reset special tiles
 
     def is_center_covered(self):
-        # Check if the center position has a letter
+        """
+        Check if the center position has a letter.
+        
+        Returns:
+            bool: True if center position is occupied, False otherwise
+        """
         return self.is_occupied(self.center[0], self.center[1]) # Check if the center is occupied
     
     def is_valid_position(self, row, col):
-        # Ensure coordinates are within bounds
+        """
+        Check if the given coordinates are within board boundaries.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            bool: True if position is within boundaries, False otherwise
+        """
         return 0 <= row < self.rows and 0 <= col < self.cols # Check if the position is valid
     
     def has_adjacent_letter(self, row, col):
+        """
+        Check if a position has at least one adjacent letter.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            bool: True if position has an adjacent letter, False otherwise
+        """
         # Check if a position connects to existing letters
         if not self.is_valid_position(row, col):
             return False # Ensure the position is valid
