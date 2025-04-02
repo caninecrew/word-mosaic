@@ -43,6 +43,14 @@ class LetterBank:
             self.letter_bank_total += num_tiles
         else:
             raise ValueError("Invalid letter returned to the bank.")
+        
+    def is_available(self, letter):
+        """Check if a letter is available in the letter bank."""
+        return self.letter_bank.get(letter, 0) > 0
+    
+    def bank_empty(self):
+        """Check if the letter bank is empty."""
+        return self.letter_bank_total == 0
 
 class PlayerHand:
     def __init__(self):
