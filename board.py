@@ -150,6 +150,16 @@ class Board:
         return False # Return False if no adjacent letters are found
     
     def get_horizontal_word(self, row, col):
+        """
+        Retrieve a complete word reading horizontally from the given position.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            str: The complete horizontal word containing this position
+        """
         # Retrieve a word reading from left to right
         if not self.is_valid_position(row, col): # Ensure the position is valid
             return "" # Return empty string if invalid
