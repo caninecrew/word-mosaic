@@ -10,58 +10,83 @@
 
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                            QGridLayout, QLabel, QFrame)
+                            QGridLayout, QLabel, QFrame, QHBoxLayout)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
-class WordMosaicApp(QMainWindow): # Main application class
-    def __init__(self): # Constructor method
-        super().__init__() # Call the parent constructor
+class WordMosaicApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
         
         # Set window properties
         self.setWindowTitle("Word Mosaic")
-        self.setGeometry(100, 100, 800, 600)  # x, y, width, height
+        self.setGeometry(100, 100, 800, 600)
         
         # Create central widget and layout
-        self.central_widget = QWidget() # Central widget for the main window
-        self.setCentralWidget(self.central_widget) # Set the central widget
-        self.layout = QVBoxLayout(self.central_widget) # Vertical layout for the central widget
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
         
         # Initialize UI components
         self.init_ui()
         
     def init_ui(self):
         """Initialize the user interface components"""
+        # Create game board
         self.create_game_board()
-
+        
+        # Create letter bank
+        self.create_letter_bank()
+        
     def create_game_board(self):
-        """Create a simple 15x15 game board"""
-        board_widget = QWidget() # Create a widget for the game board
-        board_layout = QGridLayout(board_widget) # Use GridLayout for a grid
-        board_layout.setSpacing(2) # Set spacing between cells - fix: call on layout not widget
-
-        # Create a 15x15 grid of buttons (or labels) for the game board
-        self.cells = {} # Dictionary to hold the cell widgets
+        """Create a simple 15x15 grid for the game board"""
+        board_widget = QWidget()
+        board_layout = QGridLayout(board_widget)
+        board_layout.setSpacing(2)  # Space between cells
+        
+        # Create 15x15 grid of cells
+        self.cells = {}
         for row in range(15):
             for col in range(15):
                 cell = QLabel()
-                cell.setFixedSize(40, 40) # Set fixed size for each cell
-                cell.setAlignment(Qt.AlignCenter) # Center align the text in the cell
-                cell.setFrameShape(QFrame.Box) # Fix: setFrameShape instead of setFrameStyle
-                cell.setFont(QFont("Arial", 12)) # Fix: Add font size parameter
-
+                cell.setFixedSize(40, 40)  # Fixed cell size
+                cell.setAlignment(Qt.AlignCenter)
+                cell.setFrameShape(QFrame.Box)  # Add border
+                cell.setFont(QFont('Arial', 14, QFont.Bold))
+                
                 # Highlight center cell
-                if (row == 7 and col == 7):
-                    cell.setStyleSheet("background-color: lightblue;")
-                else:
-                    cell.setStyleSheet("background-color: white;")
-
+                if row == 7 and col == 7:
+                    cell.setStyleSheet("background-color: #ffcccc;")
+                    
                 # Store cell reference and add to layout
                 self.cells[(row, col)] = cell
-                board_layout.addWidget(cell, row, col) # Fix: Use grid layout properly
-
-        # Add the game board widget to the main layout
+                board_layout.addWidget(cell, row, col)
+        
+        # Add board to main layout
         self.layout.addWidget(board_widget)
+        
+    def create_letter_bank(self):
+        """Create a simple display for available letters"""
+        letter_bank_widget = QWidget()
+        letter_bank_layout = QHBoxLayout(letter_bank_widget)
+        
+        # Create some sample letters for now
+        sample_letters = "ABCDEFGHIJKLMNOPQRST"
+        self.letter_tiles = []
+        
+        for letter in sample_letters:
+            tile = QLabel(letter)
+            tile.setFixedSize(35, 35)
+            tile.setAlignment(Qt.AlignCenter)
+            tile.setFrameShape(QFrame.Box)
+            tile.setFont(QFont('Arial', 12, QFont.Bold))
+            tile.setStyleSheet("background-color: #ffffcc;")
+            
+            letter_bank_layout.addWidget(tile)
+            self.letter_tiles.append(tile)
+        
+        # Add letter bank to main layout
+        self.layout.addWidget(letter_bank_widget)
 
 # Main application entry point
 if __name__ == "__main__":
