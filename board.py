@@ -138,7 +138,11 @@ class Board:
                     occupied_positions.append((row, col)) # Add occupied position to the list
         return occupied_positions # Return the list of occupied positions
     
-    
+    def calculate_coverage(self):
+        # Calculate the percentage of the board that is filled
+        total_positions = self.rows * self.cols # Total number of positions on the board
+        occupied_positions = len(self.get_occupied_positions()) # Count occupied positions
+        return (occupied_positions / total_positions) * 100
 
 game = Board(15, 15) # Create a new game board
 print(game) # Print the initial empty board
