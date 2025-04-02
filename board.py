@@ -85,6 +85,20 @@ class Board:
             end_col += 1 # Move right to find the end of the word
         return ''.join(self.board[row * self.cols + start_col:end_col + 1]) # Extract the word from the board
     
+    def get_vertical_word(self, row, col):
+        # Retrieve a word reading from top to bottom
+        if not self.is_valid_position(row, col):
+            return ""
+        if not self.is_occupied(row, col): # Check if the position is occupied
+            return ""
+        start_row = row # Start row for the word
+        while start_row > 0 and self.is_occupied(start_row - 1, col): # Move up to find the start of the word
+            start_row -= 1 # Check if the position is occupied
+        end_row = row # End row for the word
+        while end_row < self.rows - 1 and self.is_occupied(end_row + 1, col): # Move down to find the end of the word
+            end_row += 1 # Move down to find the end of the word
+        return ''.join(self.board[start_row * self.cols + col:end_row * self.cols + col + 1]) # Extract the word from the board
+    
     def get_word_at_position(self, row, col, direction):
         # Extract a complete word given a position and direction
         if direction == 'horizontal': 
