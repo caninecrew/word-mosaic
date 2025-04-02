@@ -10,7 +10,7 @@
 
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                            QGridLayout, QLabel, QFrame, QHBoxLayout)
+                            QGridLayout, QLabel, QFrame, QHBoxLayout, QStatusBar)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
@@ -26,6 +26,11 @@ class WordMosaicApp(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
+        
+        # Create status bar
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+        self.status_bar.showMessage("Welcome to Word Mosaic!")
         
         # Initialize UI components
         self.init_ui()
@@ -94,6 +99,11 @@ class WordMosaicApp(QMainWindow):
         letter_bank_widget = QWidget()
         letter_bank_layout = QHBoxLayout(letter_bank_widget)
         
+        # Add a label for the letter bank
+        bank_label = QLabel("Your Letters:")
+        bank_label.setFont(QFont('Arial', 12))
+        letter_bank_layout.addWidget(bank_label)
+        
         # Create some sample letters for now
         sample_letters = "ABCDEFGHIJKLMNOPQRST"
         self.letter_tiles = []
@@ -111,6 +121,10 @@ class WordMosaicApp(QMainWindow):
         
         # Add letter bank to main layout
         self.layout.addWidget(letter_bank_widget)
+        
+    def update_score(self, new_score):
+        """Update the displayed score"""
+        self.score_value.setText(str(new_score))
 
 # Main application entry point
 if __name__ == "__main__":
