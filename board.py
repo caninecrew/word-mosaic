@@ -314,13 +314,13 @@ class Board:
     
     def get_board_2d(self):
         """Return the board as a 2D array for easier display."""
-        board_2d = []
-        for r in range(self.rows):
-            row = []
-            for c in range(self.cols):
-                row.append(self.board[r * self.cols + c])
-            board_2d.append(row)
-        return board_2d
+        board_2d = [] # Initialize an empty 2D array
+        for r in range(self.rows): # Loop through each row
+            row = [] # Initialize an empty row
+            for c in range(self.cols): # Loop through each column
+                row.append(self.board[r * self.cols + c]) # Add each letter to the row
+            board_2d.append(row) # Add the row to the 2D array
+        return board_2d # Return the complete 2D board
 
 if __name__ == "__main__":
     # Create a new game board and display it
