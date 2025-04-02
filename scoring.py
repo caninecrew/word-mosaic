@@ -80,22 +80,112 @@ class Scoring:
         return turn_score
 
     def get_letter_score(self, letter):
-        pass
+        """
+        Retrieve the score for a given letter.
+
+        Args:
+            letter (str): The letter to retrieve the score for.
+
+        Returns:
+            int: The score of the letter.
+        """
+        return self.letter_scores.get(letter.upper(), 0)  # Default to 0 if the letter is not found
+
 
     def apply_special_tiles(self, word, positions):
-        pass
+        """
+        Apply special tile multipliers to a word.
+
+        Args:
+            word (str): The word to apply special tiles to.
+            positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+
+        Returns:
+            int: The modified score for the word after applying special tiles.
+        """
+        word_score = 0
+        word_multiplier = 1
+
+        for i, letter in enumerate(word):
+            position = positions[i]
+            letter_score = self.get_letter_score(letter)
+
+            # Check if the position has a special tile
+            if position in self.special_tiles:
+                special_tile = self.special_tiles[position]
+                if special_tile == 'DL':  # Double Letter
+                    letter_score *= 2
+                elif special_tile == 'TL':  # Triple Letter
+                    letter_score *= 3
+                elif special_tile == 'DW':  # Double Word
+                    word_multiplier *= 2
+                elif special_tile == 'TW':  # Triple Word
+                    word_multiplier *= 3
+
+            word_score += letter_score
+
+        # Apply word multiplier
+        word_score *= word_multiplier
+
+        return word_score
+
 
     def is_bingo(self, word):
-        pass
+        """
+        Check if the word qualifies for a bingo bonus.
 
-    def get_total_score(self, words):
-        pass
+        Args:
+            word (str): The word to check.
+
+        Returns:
+            bool: True if the word uses all 7 tiles, False otherwise.
+        """
+        return len(word) == 7
+
+
+    def get_total_score(self):
+        """
+        Retrieve the total score accumulated by the player.
+
+        Returns:
+            int: The total score.
+        """
+        return self.total_score
+
 
     def reset_score(self):
-        pass
+        """
+        Reset the player's total score and word scores.
+        """
+        self.total_score = 0
+        self.word_scores.clear()
+
 
     def load_letter_score(self, letter_score_file):
-        pass
+        """
+        Load letter scores from a configuration file.
+
+        Args:
+            letter_score_file (str): Path to the file containing letter scores.
+        """
+        import json
+        with open(letter_score_file, "r") as file:
+            self.letter_scores = json.load(file)
+
 
     def validate_word_positions(self, word, positions):
-        pass
+        """
+        Ensure the word's positions align with the board's rules.
+
+        Args:
+            word (str): The word to validate.
+            positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+
+        Returns:
+            bool: True if the word is placed in a straight line, False otherwise.
+        """
+        rows = [pos[0] for pos in positions]
+        cols = [pos[1] for pos in positions]
+
+        # Check if all rows are the same (horizontal word) or all columns are the same (vertical word)
+        return len(set(rows)) == 1 or len(set(cols)) == 1
