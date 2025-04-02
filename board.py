@@ -267,6 +267,12 @@ class Board:
         return list(set(words)) # Return unique words formed
     
     def get_occupied_positions(self):
+        """
+        List all positions on the board that contain letters.
+        
+        Returns:
+            list: A list of (row, col) tuples representing occupied positions
+        """
         # List all occupied positions on the board
         occupied_positions = []
         for row in range(self.rows): # Loop through each row
@@ -276,12 +282,27 @@ class Board:
         return occupied_positions # Return the list of occupied positions
     
     def calculate_coverage(self):
+        """
+        Calculate the percentage of the board that is filled with letters.
+        
+        Returns:
+            float: Percentage of board coverage (0-100)
+        """
         # Calculate the percentage of the board that is filled
         total_positions = self.rows * self.cols # Total number of positions on the board
         occupied_positions = len(self.get_occupied_positions()) # Count occupied positions
         return (occupied_positions / total_positions) * 100
     
     def find_valid_placements(self, letter):
+        """
+        Identify all legal positions for placing a new letter.
+        
+        Args:
+            letter (str): The letter to place
+            
+        Returns:
+            list: A list of (row, col) tuples representing valid placement positions
+        """
         # Identify legal positions for placing new letters
         valid_positions = []
         for row in range(self.rows):
@@ -291,14 +312,37 @@ class Board:
         return valid_positions
     
     def get_special_tiles(self):
+        """
+        Retrieve all unoccupied special tiles and their multipliers.
+        
+        Returns:
+            dict: A dictionary mapping (row, col) positions to multiplier types
+        """
         # Retrieve special tiles and their multipliers
         return {pos: self.special_tiles[pos] for pos in self.special_tiles if not self.special_tiles_occupied[pos]} # Return unoccupied special tiles
     
     def get_special_tile_multiplier(self, row, col):
+        """
+        Get the multiplier type for a special tile at the specified position.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            str: Multiplier type (e.g., 'DL', 'TL'), or None if not a special tile
+        """
         # Get the multiplier for a special tile at the specified position
         return self.special_tiles.get((row, col), None)
     
     def get_state(self):
+        """
+        Return the current state of the board.
+        
+        Returns:
+            dict: A dictionary containing the board state information including
+                  the board, special tiles, center position, and current coverage
+        """
         # Return the current state of the board
         return {
             'board': self.board,
@@ -308,7 +352,18 @@ class Board:
         }
     
     def is_valid_placement(self, letter, row, col, first_play=False):
-        """Check if placing a letter follows all game rules."""
+        """
+        Check if placing a letter follows all game rules.
+        
+        Args:
+            letter (str): The letter to place
+            row (int): Row position
+            col (int): Column position
+            first_play (bool): Whether this is the first play of the game
+            
+        Returns:
+            bool: True if placement is valid according to game rules
+        """
         # Check basic requirements
         if not self.is_valid_position(row, col) or self.is_occupied(row, col): # Check if the position is valid and not occupied
             return False
@@ -324,7 +379,18 @@ class Board:
         return True
     
     def is_valid_word_placement(self, word, row, col, direction):
-        """Check if an entire word can be validly placed."""
+        """
+        Check if an entire word can be validly placed on the board.
+        
+        Args:
+            word (str): The word to place
+            row (int): Starting row position
+            col (int): Starting column position
+            direction (str): Either 'horizontal' or 'vertical'
+            
+        Returns:
+            bool: True if the word can be validly placed
+        """
         if direction not in ['horizontal', 'vertical']:
             return False
             
@@ -343,7 +409,18 @@ class Board:
         return True
     
     def place_word(self, word, row, col, direction):
-        """Place an entire word on the board."""
+        """
+        Place an entire word on the board.
+        
+        Args:
+            word (str): The word to place
+            row (int): Starting row position
+            col (int): Starting column position
+            direction (str): Either 'horizontal' or 'vertical'
+            
+        Returns:
+            bool: True if the word was successfully placed
+        """
         if not self.is_valid_word_placement(word, row, col, direction): # Check if the word can be placed
             return False
             
@@ -356,7 +433,13 @@ class Board:
         return True
     
     def get_board_2d(self):
-        """Return the board as a 2D array for easier display."""
+        """
+        Return the board as a 2D array for easier display in the UI.
+        
+        Returns:
+            list: A 2D list representation of the board where board_2d[row][col]
+                  gives the letter at that position
+        """
         board_2d = [] # Initialize an empty 2D array
         for r in range(self.rows): # Loop through each row
             row = [] # Initialize an empty row
