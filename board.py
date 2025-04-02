@@ -550,13 +550,107 @@ class Board:
         return board
 
 if __name__ == "__main__":
-    # Create a new game board and display it
-
-    game = Board(15, 15) # Create a new game board
+    # Create a test board
+    print("Creating a new 15x15 game board...")
+    game = Board(15, 15)
     
-    game.place_letter('A', 7, 7) # Place a letter on the board
-    game.place_letter('B', 7, 8) # Place another letter
-    game.place_letter('C', 7, 9) # Place a third letter
-
-    print(game) # Print the initial empty board
+    # Test 1: Basic letter placement
+    print("\n--- Test 1: Basic Letter Placement ---")
+    game.place_letter('A', 7, 7)  # Center
+    game.place_letter('P', 7, 8)
+    game.place_letter('P', 7, 9)
+    game.place_letter('L', 7, 10)
+    game.place_letter('E', 7, 11)
+    print(game)
+    print(f"Word at center (horizontal): {game.get_horizontal_word(7, 7)}")
+    
+    # Test 2: Word placement
+    print("\n--- Test 2: Word Placement ---")
+    game.place_word("ORANGE", 6, 9, "vertical")
+    print(game)
+    print("Words on board:", game.get_all_words())
+    
+    # Test 3: Error handling
+    print("\n--- Test 3: Error Handling ---")
+    try:
+        game.place_letter('X', 7, 7)  # Already occupied
+        print("Test failed: Should have raised an error")
+    except ValueError as e:
+        print(f"Success! Caught error: {e}")
+        
+    try:
+        game.place_letter('1', 0, 0)  # Non-alphabetic
+        print("Test failed: Should have raised an error")
+    except ValueError as e:
+        print(f"Success! Caught error: {e}")
+    
+    # Test 4: Special tiles
+    print("\n--- Test 4: Special Tiles ---")
+    print(f"Special tiles before: {game.get_special_tiles()}")
+    game.place_letter('Z', 0, 0)  # Place on DL tile
+    print(f"Special tiles after: {game.get_special_tiles()}")
+    print(f"Multiplier at (0,0): {game.get_special_tile_multiplier(0, 0)}")
+    print(f"Is special tile occupied: {game.special_tiles_occupied[(0, 0)]}")
+    
+    # Test 5: Board coverage
+    print("\n--- Test 5: Board Coverage ---")
+    print(f"Board coverage: {game.calculate_coverage():.2f}%")
+    print(f"Occupied positions: {game.get_occupied_positions()}")
+    
+    # Test 6: Word identification
+    print("\n--- Test 6: Word Identification ---")
+    horizontal = game.get_word_at_position(7, 9, "horizontal")
+    vertical = game.get_word_at_position(7, 9, "vertical")
+    print(f"Horizontal word at (7,9): {horizontal}")
+    print(f"Vertical word at (7,9): {vertical}")
+    
+    # Test 7: Finding valid placements
+    print("\n--- Test 7: Finding Valid Placements ---")
+    valid_placements = game.find_valid_placements('X')
+    print(f"Number of valid placements: {len(valid_placements)}")
+    print(f"Sample valid positions: {valid_placements[:5] if valid_placements else 'None'}")
+    
+    # Test 8: Serialization
+    print("\n--- Test 8: Serialization ---")
+    board_state = game.to_json()
+    print(f"Board serialized to: {type(board_state)}")
+    
+    # Test 9: Create a new board from serialized data
+    print("\n--- Test 9: Deserialization ---")
+    new_game = Board.from_json(board_state)
+    print("Recreated board:")
+    print(new_game)
+    print(f"Words on recreated board: {new_game.get_all_words()}")
+    
+    # Test 10: Clear and reset
+    print("\n--- Test 10: Clear and Reset ---")
+    game.reset_board()
+    print("After reset:")
+    print(game)
+    print(f"Board coverage after reset: {game.calculate_coverage():.2f}%")
+    
+    # Test 11: Complex word placement scenario
+    print("\n--- Test 11: Complex Word Scenario ---")
+    # Set up a small crossword
+    game.place_word("HELLO", 5, 5, "horizontal")
+    game.place_word("WORLD", 3, 7, "vertical")
+    game.place_word("CODE", 8, 4, "horizontal")
+    print(game)
+    all_words = game.get_all_words()
+    print(f"All words on board: {all_words}")
+    
+    # Test 12: 2D representation
+    print("\n--- Test 12: 2D Representation ---")
+    board_2d = game.get_board_2d()
+    print("First 5 rows of 2D board:")
+    for row in board_2d[:5]:
+        print(''.join([f"[{c if c != ' ' else ' '}]" for c in row[:5]]))
+    
+    # Test 13: Word validation
+    print("\n--- Test 13: Word Validation ---")
+    valid_words = ["APPLE", "A", "TEST", "PROGRAMMING", "PYTHON"]
+    for word in valid_words:
+        print(f"Is '{word}' valid? {game.validate_word(word)}")
+    
+    print("\nAll tests completed!")
 
