@@ -4,8 +4,8 @@
 - [X] Initialize Python project structure
 - [X] Set up version control
 - [ ] Create documentation files - complete this step later
-- [ ] Define project dependencies
-- [ ] Select GUI framework (Tkinter/PyQt/Kivy)
+- [ ] Define project dependencies - complete this step later
+- [X] Select GUI framework (Tkinter/PyQt/Kivy) - PyQt5
 
 ## 🧠 Core Game Logic
 - [ ] Implement 15x15 grid system
