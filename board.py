@@ -307,32 +307,49 @@ class Board:
         
     def get_all_words(self):
         """
-        Find all valid words currently on the board.
-        
+        Retrieve all words formed during the current turn.
+
         Returns:
-            list: A list of unique words found on the board
+            list: A list of tuples, where each tuple contains:
+                - word (str): The word formed.
+                - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
         """
-        # Find all words on the board (minimum length 2)
         words = []
-        visited_starts = set()  # Track starting positions we've already processed
-        
+
+        # Horizontal words
         for row in range(self.rows):
+            current_word = ""
+            positions = []
             for col in range(self.cols):
-                if self.is_occupied(row, col):
-                    # For horizontal words, only check if this is the leftmost letter
-                    left_empty = col == 0 or not self.is_occupied(row, col-1)
-                    if left_empty:
-                        h_word = self.get_horizontal_word(row, col)
-                        if len(h_word) >= 2:  # Only add words with 2+ letters
-                            words.append(h_word)
-                    
-                    # For vertical words, only check if this is the topmost letter
-                    top_empty = row == 0 or not self.is_occupied(row-1, col)
-                    if top_empty:
-                        v_word = self.get_vertical_word(row, col)
-                        if len(v_word) >= 2:  # Only add words with 2+ letters
-                            words.append(v_word)
-                            
+                letter = self.board[row][col]
+                if letter:
+                    current_word += letter
+                    positions.append((row, col))
+                else:
+                    if len(current_word) > 1:
+                        words.append((current_word, positions))
+                    current_word = ""
+                    positions = []
+            if len(current_word) > 1:
+                words.append((current_word, positions))
+
+        # Vertical words
+        for col in range(self.cols):
+            current_word = ""
+            positions = []
+            for row in range(self.rows):
+                letter = self.board[row][col]
+                if letter:
+                    current_word += letter
+                    positions.append((row, col))
+                else:
+                    if len(current_word) > 1:
+                        words.append((current_word, positions))
+                    current_word = ""
+                    positions = []
+            if len(current_word) > 1:
+                words.append((current_word, positions))
+
         return words
     
     def get_words_formed(self, row, col, letter):
