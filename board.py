@@ -447,6 +447,17 @@ class Board:
                 row.append(self.board[r * self.cols + c]) # Add each letter to the row
             board_2d.append(row) # Add the row to the 2D array
         return board_2d # Return the complete 2D board
+    def validate_word(self, word):
+        """
+        Check if a word is valid according to game rules.
+        
+        Args:
+            word (str): The word to validate
+            
+        Returns:
+            bool: True if the word is valid (e.g., at least 2 letters)
+        """
+        return isinstance(word, str) and len(word) >= 2 and word.isalpha() # Check if the word is valid
     
     def to_json(self):
         """Convert the board to a JSON-serializable dictionary."""
