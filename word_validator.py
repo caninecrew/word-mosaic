@@ -9,14 +9,15 @@ class WordValidator:
     def validate_word(self, word):
         """
         Check if a word is valid.
-        
+
         Args:
             word (str): The word to validate
-            
+
         Returns:
             bool: True if the word is valid, False otherwise
         """
-        return word.lower() in self.dictionary
+        self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
+        return self.cursor.fetchone() is not None
 
     def validate_words(self, words):
         """
