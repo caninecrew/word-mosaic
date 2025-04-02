@@ -23,7 +23,22 @@ class Board:
             (14, 0): 'DL', (14, 7): 'DL', (14, 14): 'DL'
         }
         self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Track if special tiles are occupied
-
+        self.define_special_tiles() # Initialize special tiles
+    
+    def define_special_tiles(self):
+        """
+        Define special tiles and their multipliers.
+        """
+        # Example: Add some special tiles
+        self.special_tiles = {
+            (0, 0): 'TW',  # Triple Word
+            (7, 7): 'DL',  # Double Letter
+            (14, 14): 'TL',  # Triple Letter
+            (0, 7): 'DW',  # Double Word
+        }
+        # Initialize all special tiles as unoccupied
+        self.special_tiles_occupied = {pos: False for pos in self.special_tiles}
+        
     def __str__(self):
         """
         Generate a string representation of the board.
