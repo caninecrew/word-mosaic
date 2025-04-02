@@ -552,6 +552,57 @@ class Board:
         # Check minimum length and all alphabetic characters
         return len(word) >= 2 and word.isalpha()
     
+    def calculate_word_score(self, word, row, col, direction):
+        """
+        Calculate score for a word based on letter values and multipliers.
+        
+        Args:
+            word (str): The word to score
+            row (int): Starting row position
+            col (int): Column position
+            direction (str): Either 'horizontal' or 'vertical'
+            
+        Returns:
+            int: The calculated score for the word
+        """
+        score = 0
+        word_multiplier = 1
+        
+        # Define letter values (A=1, B=3, etc.)
+        letter_values = {
+            'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4,
+            'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3,
+            'Q': 10, 'R': 1, 'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8,
+            'Y': 4, 'Z': 10
+        }
+        
+        # Calculate score based on letter position and special tiles
+        for i, letter in enumerate(word.upper()):
+            r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
+            letter_multiplier = 1
+            
+            # Apply special tile multipliers
+            tile_type = self.get_special_tile_multiplier(r, c)
+            if tile_type == 'DL':
+                letter_multiplier = 2
+            elif tile_type == 'TL':
+                letter_multiplier = 3
+            elif tile_type == 'DW':
+                word_multiplier *= 2
+            elif tile_type == 'TW':
+                word_multiplier *= 3
+                
+            score += letter_values.get(letter, 0) * letter_multiplier
+        
+        # Apply word multiplier and length bonus
+        final_score = score * word_multiplier
+        
+        # Word length bonus (5+ letters)
+        if len(word) >= 5:
+            final_score += (len(word) - 4) * 2
+            
+        return final_score
+        
     def to_json(self):
         """Convert the board to a JSON-serializable dictionary."""
         return {
