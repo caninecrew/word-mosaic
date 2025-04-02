@@ -210,6 +210,19 @@ class Board:
                 return False
                 
         return True
+    
+    def place_word(self, word, row, col, direction):
+        """Place an entire word on the board."""
+        if not self.is_valid_word_placement(word, row, col, direction): # Check if the word can be placed
+            return False
+            
+        # Place each letter
+        for i, letter in enumerate(word): # Loop through each letter in the word
+            r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
+            if not self.is_occupied(r, c):  # Only place if not already occupied
+                self.place_letter(letter, r, c)
+                
+        return True
 
 if __name__ == "__main__":
     # Create a new game board and display it
