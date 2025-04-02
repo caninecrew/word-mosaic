@@ -70,8 +70,29 @@ class Board:
             if self.is_valid_position(r, c) and self.is_occupied(r, c): # Check if occupied
                 return True # Return True if any adjacent position has a letter
         return False # Return False if no adjacent letters are found
-
-
+    
+    def get_horizontal_word(self, row, col):
+        # Retrieve a word reading from left to right
+        if not self.is_valid_position(row, col): # Ensure the position is valid
+            return "" # Return empty string if invalid
+        if not self.is_occupied(row, col): # Check if the position is occupied
+            return "" # Return empty string if not occupied
+        start_col = col # Start column for the word
+        while start_col > 0 and self.is_occupied(row, start_col - 1): # Move left to find the start of the word
+            start_col -= 1 # Check if the position is occupied
+        end_col = col # End column for the word
+        while end_col < self.cols - 1 and self.is_occupied(row, end_col + 1):
+            end_col += 1 # Move right to find the end of the word
+        return ''.join(self.board[row * self.cols + start_col:end_col + 1]) # Extract the word from the board
+    
+    def get_word_at_position(self, row, col, direction):
+        # Extract a complete word given a position and direction
+        if direction == 'horizontal': 
+            return self.get_horizontal_word(row, col)
+        elif direction == 'vertical':
+            return self.get_vertical_word(row, col)
+        else:
+            raise ValueError("Invalid direction")
 
 game = Board(15, 15) # Create a new game board
 print(game) # Print the initial empty board
