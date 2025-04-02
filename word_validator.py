@@ -101,3 +101,7 @@ class WordValidator:
             else:
                 invalid_words.append(word)
         return {"valid": valid_words, "invalid": invalid_words}
+    
+    def close(self):
+        """Close the database connection."""
+        self.conn.close()
