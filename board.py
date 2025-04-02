@@ -227,6 +227,12 @@ class Board:
             raise ValueError("Invalid direction")
         
     def get_all_words(self):
+        """
+        Find all valid words currently on the board.
+        
+        Returns:
+            list: A list of unique words found on the board
+        """
         # Find all words on the board
         words = []
         for row in range(self.rows): # Loop through each row
