@@ -586,8 +586,8 @@ if __name__ == "__main__":
     
     # Test 2: Word placement - Make a compatible crossword 
     print("\n--- Test 2: Word Placement ---")
-    # Place a word that shares 'A' with APPLE
-    game.place_word("ANIMAL", 4, 7, "vertical")  # This shares 'A' at position (7,7)
+    # Place a word that shares 'A' with DRAMA
+    game.place_word("DRAMA", 3, 7, "vertical")
     print(game)
     print("Words on board:", game.get_all_words())
     
