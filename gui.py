@@ -1,12 +1,14 @@
 """
 ## 🎮 User Interface - PyQt5
-- [ ] Design main game board layout
-- [ ] Create letter bank display
+- [X] Design main game board layout
+- [X] Create letter bank display
 - [ ] Implement drag-and-drop letter placement
 - [ ] Design score tracking display
 - [ ] Add visual feedback for valid/invalid placements
 - [ ] Create game menu and controls"
 """
+from board import Board
+from letter_bank import LetterBank, PlayerHand
 
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
@@ -21,6 +23,13 @@ class WordMosaicApp(QMainWindow):
         # Set window properties
         self.setWindowTitle("Word Mosaic")
         self.setGeometry(100, 100, 800, 600)
+
+        # Initialize game components
+        self.game_board = Board(15, 15)
+        self.letter_bank = LetterBank()
+        self.player_hand = self.letter_bank.create_player_hand()
+        self.player_hand.fill_initial_hand()
+        self.score = 0
         
         # Create central widget and layout
         self.central_widget = QWidget()
@@ -95,7 +104,7 @@ class WordMosaicApp(QMainWindow):
         self.layout.addWidget(board_widget)
         
     def create_letter_bank(self):
-        """Create a simple display for available letters"""
+        """Create display for player's letters"""
         letter_bank_widget = QWidget()
         letter_bank_layout = QHBoxLayout(letter_bank_widget)
         
@@ -104,27 +113,26 @@ class WordMosaicApp(QMainWindow):
         bank_label.setFont(QFont('Arial', 12))
         letter_bank_layout.addWidget(bank_label)
         
-        # Create some sample letters for now
-        sample_letters = "ABCDEFGHIJKLMNOPQRST"
+        # Get actual letters from player hand
         self.letter_tiles = []
+        player_letters = self.player_hand.get_letters_as_list()
         
-        for letter in sample_letters:
-            tile = QLabel(letter)
+        for letter in player_letters:
+            tile = QLabel(letter.upper())
             tile.setFixedSize(35, 35)
             tile.setAlignment(Qt.AlignCenter)
             tile.setFrameShape(QFrame.Box)
             tile.setFont(QFont('Arial', 12, QFont.Bold))
             tile.setStyleSheet("background-color: #ffffcc;")
             
+            # Make letter tiles clickable
+            tile.mousePressEvent = lambda event, l=letter: self.select_letter(l)
+            
             letter_bank_layout.addWidget(tile)
             self.letter_tiles.append(tile)
         
         # Add letter bank to main layout
         self.layout.addWidget(letter_bank_widget)
-        
-    def update_score(self, new_score):
-        """Update the displayed score"""
-        self.score_value.setText(str(new_score))
 
 # Main application entry point
 if __name__ == "__main__":
