@@ -2,8 +2,8 @@
 
 ## 📦 Project Setup
 - [X] Initialize Python project structure
-- [ ] Set up version control
-- [ ] Create documentation files
+- [X] Set up version control
+- [ ] Create documentation files - complete this step later
 - [ ] Define project dependencies
 - [ ] Select GUI framework (Tkinter/PyQt/Kivy)
 
