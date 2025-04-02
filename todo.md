@@ -12,9 +12,9 @@
 - [X] Create letter bank with 20 randomized letters based on frequency distributions
 - [ ] Develop word validation system
 - [ ] Implement placement rules:
-  - [ ] First word must cross center
+  - [X] First word must cross center
   - [ ] All new words must connect to existing mosaic
-  - [ ] Ensure all word connections are valid
+  - [X] Ensure all word connections are valid
 - [ ] Create letter distribution algorithm
 
 ## 🎮 User Interface
