@@ -32,11 +32,35 @@ class WordMosaicApp(QMainWindow):
         
     def init_ui(self):
         """Initialize the user interface components"""
+        # Create score display
+        self.create_score_display()
+        
         # Create game board
         self.create_game_board()
         
         # Create letter bank
         self.create_letter_bank()
+    
+    def create_score_display(self):
+        """Create a simple score display"""
+        score_widget = QWidget()
+        score_layout = QHBoxLayout(score_widget)
+        
+        # Score label
+        score_title = QLabel("Score:")
+        score_title.setFont(QFont('Arial', 14))
+        score_layout.addWidget(score_title)
+        
+        # Actual score value
+        self.score_value = QLabel("0")
+        self.score_value.setFont(QFont('Arial', 14, QFont.Bold))
+        score_layout.addWidget(self.score_value)
+        
+        # Add spacer to push score to left
+        score_layout.addStretch()
+        
+        # Add score widget to main layout
+        self.layout.addWidget(score_widget)
         
     def create_game_board(self):
         """Create a simple 15x15 grid for the game board"""
