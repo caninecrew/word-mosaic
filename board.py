@@ -447,6 +447,23 @@ class Board:
                 row.append(self.board[r * self.cols + c]) # Add each letter to the row
             board_2d.append(row) # Add the row to the 2D array
         return board_2d # Return the complete 2D board
+    
+    def to_json(self):
+        """Convert the board to a JSON-serializable dictionary."""
+        return {
+            "rows": self.rows,
+            "cols": self.cols,
+            "board": self.board,
+            "special_tiles_occupied": self.special_tiles_occupied
+        }
+
+    @classmethod
+    def from_json(cls, data):
+        """Create a board from a JSON dictionary."""
+        board = cls(data["rows"], data["cols"])
+        board.board = data["board"]
+        board.special_tiles_occupied = data["special_tiles_occupied"]
+        return board
 
 if __name__ == "__main__":
     # Create a new game board and display it
