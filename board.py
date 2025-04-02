@@ -7,9 +7,9 @@ class Board:
     def __init__(self, rows, cols, special_tiles):
         self.rows = rows
         self.cols = cols
-        self.board = [['' for _ in range(cols)] for _ in range(rows)]
+        self.board = [['' for _ in range(cols)] for _ in range(rows)]  # Initialize as a 2D list
         self.special_tiles = special_tiles  # Pass special tiles to the board
-        self.scoring = Scoring(special_tiles)  # Initialize Scoring with special tiles
+        self.special_tiles_occupied = {pos: False for pos in special_tiles}  # Track special tile occupancy
 
     def calculate_turn_score(self, words):
         """
