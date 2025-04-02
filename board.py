@@ -89,12 +89,12 @@ class Board:
     def place_letter(self, letter, row, col):
         """
         Place a letter on the board at the specified position.
-        
+
         Args:
             letter (str): The letter to place
             row (int): Row position
             col (int): Column position
-            
+
         Raises:
             ValueError: If the position is already occupied or invalid
             TypeError: If letter is not a string
@@ -107,16 +107,16 @@ class Board:
             raise ValueError("Letter must be a single character")
         if not letter.isalpha():
             raise ValueError("Only alphabetic characters are allowed")
-        
+
         # Position validation
         if not self.is_valid_position(row, col):
             raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
         if self.is_occupied(row, col):
             raise ValueError(f"Position ({row}, {col}) is already occupied")
-        
+
         # Place the letter
-        self.board[row * self.cols + col] = letter.upper()  # Convert to uppercase for consistency
-        
+        self.board[row][col] = letter.upper()  # Convert to uppercase for consistency
+
         # Update special tile status
         if (row, col) in self.special_tiles:
             self.special_tiles_occupied[(row, col)] = True
