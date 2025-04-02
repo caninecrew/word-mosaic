@@ -1,12 +1,3 @@
-"""
-## 🎮 User Interface - PyQt5
-- [X] Design main game board layout
-- [X] Create letter bank display
-- [ ] Implement drag-and-drop letter placement
-- [ ] Design score tracking display
-- [ ] Add visual feedback for valid/invalid placements
-- [ ] Create game menu and controls"
-"""
 from board import Board
 from letter_bank import LetterBank, PlayerHand
 
