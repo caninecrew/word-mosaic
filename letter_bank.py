@@ -21,6 +21,20 @@ class LetterBank:
         self.letter_bank = self.LETTER_FREQUENCIES.copy() 
         self.letter_bank_total = sum(self.letter_bank.values()) # total number of tiles in the bank
 
+    def draw_tiles(self, num_tiles):
+        """Draw a specified number of tiles from the letter bank."""
+        drawn_tiles = {}
+        for _ in range(num_tiles):
+            if self.letter_bank_total == 0:
+                break
+            letter = self._get_random_letter()
+            if letter in drawn_tiles:
+                drawn_tiles[letter] += 1
+            else:
+                drawn_tiles[letter] = 1
+            self.letter_bank[letter] -= 1
+            self.letter_bank_total -= 1
+        return drawn_tiles
 
 class PlayerHand:
     def __init__(self):
