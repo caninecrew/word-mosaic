@@ -98,24 +98,28 @@ class WordMosaicApp(QMainWindow):
                 cell.setFixedSize(40, 40)  # Fixed cell size
                 cell.setAlignment(Qt.AlignCenter)
                 cell.setFrameShape(QFrame.Box)  # Add border
-                cell.setFont(QFont('Arial', 14, QFont.Bold))
 
                 # Highlight special tiles
                 special_tile = self.game_board.get_special_tile_multiplier(row, col)
                 if special_tile == 'TW':
                     cell.setStyleSheet("background-color: #ff9999;")  # Triple Word
                     cell.setText("TW")
+                    cell.setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                 elif special_tile == 'DW':
                     cell.setStyleSheet("background-color: #ffcc99;")  # Double Word
                     cell.setText("DW")
+                    cell.setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                 elif special_tile == 'TL':
                     cell.setStyleSheet("background-color: #9999ff;")  # Triple Letter
                     cell.setText("TL")
+                    cell.setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                 elif special_tile == 'DL':
                     cell.setStyleSheet("background-color: #99ccff;")  # Double Letter
                     cell.setText("DL")
+                    cell.setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                 elif row == 7 and col == 7:
                     cell.setStyleSheet("background-color: #ffcccc;")  # Center tile
+                    cell.setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for center tile
 
                 # Add click event
                 cell.mousePressEvent = lambda event, r=row, c=col: self.place_letter(r, c)
@@ -126,40 +130,40 @@ class WordMosaicApp(QMainWindow):
 
         # Add board to main layout
         self.layout.addWidget(board_widget)
-        
-    def populate_letter_bank(self):
-        """Populate the letter bank with player's current letters"""
-        # Clear existing widgets
-        while self.letter_bank_layout.count():
-            item = self.letter_bank_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        
-        # Add a label for the letter bank
-        bank_label = QLabel("Your Letters:")
-        bank_label.setFont(QFont('Arial', 12))
-        self.letter_bank_layout.addWidget(bank_label)
-        
-        # Get actual letters from player hand
-        self.letter_tiles = []
-        player_letters = self.player_hand.letter_order
-        
-        for i, letter in enumerate(player_letters):
-            # Handle blank tiles explicitly
-            display_letter = "" if letter == "0" else letter.upper()
             
-            tile = QLabel(display_letter)
-            tile.setFixedSize(35, 35)
-            tile.setAlignment(Qt.AlignCenter)
-            tile.setFrameShape(QFrame.Box)
-            tile.setFont(QFont('Arial', 12, QFont.Bold))
-            tile.setStyleSheet("background-color: #ffffcc;")
+        def populate_letter_bank(self):
+            """Populate the letter bank with player's current letters"""
+            # Clear existing widgets
+            while self.letter_bank_layout.count():
+                item = self.letter_bank_layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
             
-            # Pass both the letter and its index to the select_letter method
-            tile.mousePressEvent = lambda event, l=letter, idx=i: self.select_letter(l, idx)
+            # Add a label for the letter bank
+            bank_label = QLabel("Your Letters:")
+            bank_label.setFont(QFont('Arial', 12))
+            self.letter_bank_layout.addWidget(bank_label)
             
-            self.letter_bank_layout.addWidget(tile)
-            self.letter_tiles.append(tile)
+            # Get actual letters from player hand
+            self.letter_tiles = []
+            player_letters = self.player_hand.letter_order
+            
+            for i, letter in enumerate(player_letters):
+                # Handle blank tiles explicitly
+                display_letter = "" if letter == "0" else letter.upper()
+                
+                tile = QLabel(display_letter)
+                tile.setFixedSize(35, 35)
+                tile.setAlignment(Qt.AlignCenter)
+                tile.setFrameShape(QFrame.Box)
+                tile.setFont(QFont('Arial', 12, QFont.Bold))
+                tile.setStyleSheet("background-color: #ffffcc;")
+                
+                # Pass both the letter and its index to the select_letter method
+                tile.mousePressEvent = lambda event, l=letter, idx=i: self.select_letter(l, idx)
+                
+                self.letter_bank_layout.addWidget(tile)
+                self.letter_tiles.append(tile)
     
     def create_control_buttons(self):
         """Create game control buttons"""
