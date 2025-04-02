@@ -310,10 +310,7 @@ class WordMosaicApp(QMainWindow):
             # Update the board and status
             self.refresh_board()
             self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
-    
-        except Exception as e:
-            self.status_bar.showMessage(f"Error submitting word: {str(e)}")
-            
+        
         except Exception as e:
             self.status_bar.showMessage(f"Error submitting word: {str(e)}")
 
