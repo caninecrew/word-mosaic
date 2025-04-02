@@ -175,13 +175,10 @@ if __name__ == "__main__":
     # Create a new game board and display it
 
     game = Board(15, 15) # Create a new game board
+    
+    game.place_letter('A', 7, 7) # Place a letter on the board
+    game.place_letter('B', 7, 8) # Place another letter
+    game.place_letter('C', 7, 9) # Place a third letter
+
     print(game) # Print the initial empty board
         
-    
-
-        
-"""
-Display Support
-To string: Generate string representation of board
-Get state: Return the current state for the GUI to display"
-"""
