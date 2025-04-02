@@ -52,6 +52,31 @@ class LetterBank:
         """Check if the letter bank is empty."""
         return self.letter_bank_total == 0
     
+    def init_letter_bank(self):
+        """Initialize the letter bank to its original state."""
+        self.letter_bank = self.LETTER_FREQUENCIES.copy()
+        self.letter_bank_total = sum(self.letter_bank.values())
+
+    def get_letter_bank(self):
+        """Get the current state of the letter bank."""
+        return self.letter_bank.copy()
+    
+    def get_letter_bank_total(self):
+        """Get the total number of tiles in the letter bank."""
+        return self.letter_bank_total
+    
+    def get_letter_value(self, letter):
+        """Get the point value of a letter."""
+        return self.LETTER_VALUES.get(letter, 0)
+    
+    def get_letter_count(self, letter):
+        """Get the count of a letter in the letter bank."""
+        return self.letter_bank.get(letter, 0)
+    
+    def get_letter_frequencies(self):
+        """Get the frequencies of letters in the letter bank."""
+        return self.LETTER_FREQUENCIES.copy()
+    
     def _get_random_letter(self):
         """Get a random letter from the letter bank."""
         letters = [letter for letter, count in self.letter_bank.items() if count > 0]
