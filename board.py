@@ -91,38 +91,38 @@ class Board:
         print(f"Board dimensions: {self.rows}x{self.cols}")
         print(f"Board state: {self.board}")
         """
-        Place a letter on the board at the specified position.
+            Place a letter on the board at the specified position.
 
-        Args:
-            letter (str): The letter to place
-            row (int): Row position
-            col (int): Column position
+            Args:
+                letter (str): The letter to place
+                row (int): Row position
+                col (int): Column position
 
-        Raises:
-            ValueError: If the position is already occupied or invalid
-            TypeError: If letter is not a string
-            ValueError: If letter is not a single alphabetic character
-        """
-        # Input validation
-        if not isinstance(letter, str):
-            raise TypeError("Letter must be a string")
-        if len(letter) != 1:
-            raise ValueError("Letter must be a single character")
-        if not letter.isalpha():
-            raise ValueError("Only alphabetic characters are allowed")
+            Raises:
+                ValueError: If the position is already occupied or invalid
+                TypeError: If letter is not a string
+                ValueError: If letter is not a single alphabetic character
+            """
+            # Input validation
+            if not isinstance(letter, str):
+                raise TypeError("Letter must be a string")
+            if len(letter) != 1:
+                raise ValueError("Letter must be a single character")
+            if not letter.isalpha() and letter != '0':  # Allow blank tiles ('0')
+                raise ValueError("Only alphabetic characters or blank tiles ('0') are allowed")
 
-        # Position validation
-        if not self.is_valid_position(row, col):
-            raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
-        if self.is_occupied(row, col):
-            raise ValueError(f"Position ({row}, {col}) is already occupied")
+            # Position validation
+            if not self.is_valid_position(row, col):
+                raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
+            if self.is_occupied(row, col):
+                raise ValueError(f"Position ({row}, {col}) is already occupied")
 
-        # Place the letter
-        self.board[row][col] = letter.upper()  # Convert to uppercase for consistency
+            # Place the letter
+            self.board[row][col] = letter.upper() if letter != '0' else ''  # Convert to uppercase, blank tiles are empty
 
-        # Update special tile status
-        if (row, col) in self.special_tiles:
-            self.special_tiles_occupied[(row, col)] = True
+            # Update special tile status
+            if (row, col) in self.special_tiles:
+                self.special_tiles_occupied[(row, col)] = True
 
     def is_occupied(self, row, col):
         """
