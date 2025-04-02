@@ -223,6 +223,16 @@ class Board:
                 self.place_letter(letter, r, c)
                 
         return True
+    
+    def get_board_2d(self):
+        """Return the board as a 2D array for easier display."""
+        board_2d = []
+        for r in range(self.rows):
+            row = []
+            for c in range(self.cols):
+                row.append(self.board[r * self.cols + c])
+            board_2d.append(row)
+        return board_2d
 
 if __name__ == "__main__":
     # Create a new game board and display it
