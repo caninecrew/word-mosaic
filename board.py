@@ -204,6 +204,20 @@ class Board:
         return word # Return the complete word
     
     def get_word_at_position(self, row, col, direction):
+        """
+        Extract a complete word given a position and direction.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            direction (str): Either 'horizontal' or 'vertical'
+            
+        Returns:
+            str: The complete word in the specified direction
+            
+        Raises:
+            ValueError: If an invalid direction is provided
+        """
         # Extract a complete word given a position and direction
         if direction == 'horizontal': 
             return self.get_horizontal_word(row, col)
