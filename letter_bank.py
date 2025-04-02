@@ -35,6 +35,14 @@ class LetterBank:
             self.letter_bank[letter] -= 1
             self.letter_bank_total -= 1
         return drawn_tiles
+    
+    def return_tiles(self, letter, num_tiles):
+        """Return tiles back to the letter bank."""
+        if letter in self.letter_bank:
+            self.letter_bank[letter] += num_tiles
+            self.letter_bank_total += num_tiles
+        else:
+            raise ValueError("Invalid letter returned to the bank.")
 
 class PlayerHand:
     def __init__(self):
