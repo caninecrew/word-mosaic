@@ -131,16 +131,19 @@ class WordMosaicApp(QMainWindow):
         self.letter_tiles = []
         player_letters = self.player_hand.letter_order
         
-        for letter in player_letters:
-            tile = QLabel(letter.upper())
+        for i, letter in enumerate(player_letters):
+            # Handle blank tiles explicitly
+            display_letter = "" if letter == "0" else letter.upper()
+            
+            tile = QLabel(display_letter)
             tile.setFixedSize(35, 35)
             tile.setAlignment(Qt.AlignCenter)
             tile.setFrameShape(QFrame.Box)
             tile.setFont(QFont('Arial', 12, QFont.Bold))
             tile.setStyleSheet("background-color: #ffffcc;")
             
-            # Fix the click event with proper lambda capture
-            tile.mousePressEvent = lambda event, letter=letter: self.select_letter(letter)
+            # Pass both the letter and its index to the select_letter method
+            tile.mousePressEvent = lambda event, l=letter, idx=i: self.select_letter(l, idx)
             
             self.letter_bank_layout.addWidget(tile)
             self.letter_tiles.append(tile)
@@ -183,14 +186,15 @@ class WordMosaicApp(QMainWindow):
                 else:
                     self.cells[(row, col)].setText("")
     
-    def select_letter(self, letter):
+    def select_letter(self, letter, index):
         """Handle letter selection from bank"""
         self.selected_letter = letter
+        self.selected_index = index
         self.status_bar.showMessage(f"Selected letter: {letter.upper()}")
         
-        # Highlight the selected letter tile
-        for tile in self.letter_tiles:
-            if tile.text() == letter.upper():
+        # Highlight only the specific clicked tile
+        for i, tile in enumerate(self.letter_tiles):
+            if i == index:
                 tile.setStyleSheet("background-color: #ffcc66; border: 2px solid black;")
             else:
                 tile.setStyleSheet("background-color: #ffffcc;")
