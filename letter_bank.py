@@ -36,6 +36,19 @@ class LetterBank:
             self.letter_bank_total -= 1
         return drawn_tiles
     
+    def refill_hand(self, player_hand, num_tiles):
+        """Refill the player's hand with tiles from the letter bank."""
+        if self.letter_bank_total == 0:
+            return False
+        drawn_tiles = self.draw_tiles(num_tiles)
+        for letter, count in drawn_tiles.items():
+            if letter in player_hand.hand:
+                player_hand.hand[letter] += count
+            else:
+                player_hand.hand[letter] = count
+        player_hand.hand_total += sum(drawn_tiles.values())
+        return True
+    
     def return_tiles(self, letter, num_tiles):
         """Return tiles back to the letter bank."""
         if letter in self.letter_bank:
