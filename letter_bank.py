@@ -32,5 +32,14 @@ class LetterBank:
                                         }
     
     def __init__(self):
-        self.letter_bank = self.LETTER_FREQUENCIES.copy()
-        self.letter_bank_total = sum(self.letter_bank.values())
+        self.letter_bank = self.LETTER_FREQUENCIES.copy() 
+        self.letter_bank_total = sum(self.letter_bank.values()) # total number of tiles in the bank
+
+
+class PlayerHand:
+    def __init__(self):
+        self.hand = {}
+        self.hand_total = sum(self.hand.values()) # total number of tiles in the hand
+
+    
+        
