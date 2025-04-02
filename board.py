@@ -1,5 +1,18 @@
 class Board:
+    """
+    Represents the game board for Word Mosaic.
+    
+    The board is a grid of rows x cols cells where letters can be placed
+    to form words. It includes special tiles that provide score multipliers.
+    """
     def __init__(self, rows, cols):
+        """
+        Initialize a new game board with the specified dimensions.
+        
+        Args:
+            rows (int): Number of rows in the board
+            cols (int): Number of columns in the board
+        """
         self.rows = rows # Store the number of rows
         self.cols = cols # Store the number of columns
         self.board = [' ' for _ in range(rows * cols)] # Initialize the board with empty spaces
