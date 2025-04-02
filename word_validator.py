@@ -29,3 +29,16 @@ class WordValidator:
             list: List of valid words
         """
         return [word for word in words if self.validate_word(word)]
+
+    def validate_sentence(self, sentence):
+        """
+        Validate a sentence by checking each word.
+        
+        Args:
+            sentence (str): The sentence to validate
+            
+        Returns:
+            list: List of valid words in the sentence
+        """
+        words = sentence.split()
+        return self.validate_words(words)
