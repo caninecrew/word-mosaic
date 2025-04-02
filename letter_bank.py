@@ -1,8 +1,7 @@
 
 
 class LetterBank:
-    def __init__(self):
-        self.letter_bank = letter_bank = {
+    LETTER_FREQUENCIES = {
                                             'a': 9,
                                             'b': 2,
                                             'c': 2,
@@ -31,5 +30,7 @@ class LetterBank:
                                             'z': 1,
                                             '0': 2, # bank tiles
                                         }
-        self.letter_bank_total = sum(letter_bank.values())
-        
+    
+    def __init__(self):
+        self.letter_bank = self.LETTER_FREQUENCIES.copy()
+        self.letter_bank_total = sum(self.letter_bank.values())
