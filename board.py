@@ -244,6 +244,19 @@ class Board:
         return list(set(words)) # Return unique words found
     
     def get_words_formed(self, row, col, letter):
+        """
+        Find all words that would be formed by placing a new letter.
+        
+        This method temporarily places the letter, identifies words, then removes it.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            letter (str): The letter to place
+            
+        Returns:
+            list: A list of unique words that would be formed
+        """
         # Find all words formed by placing a new letter(s)
         words = []
         if self.is_valid_position(row, col) and not self.is_occupied(row, col): # Check if the position is valid and not occupied
