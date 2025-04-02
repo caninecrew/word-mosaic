@@ -37,14 +37,30 @@ class Board:
     def get_letter(self, row, col):
         # Retrieve the letter at the specified position
         return self.board[row * self.cols + col] if self.is_valid_position(row, col) else None
-        
-"""
-Is occupied: Check if a position already has a letter
-Get letter: Retrieve the letter at a given position
-Clear position: Remove a letter from a position
-Reset board: Clear all letters from the board
+    
+    def clear_position(self, row, col):
+        # Remove the letter from the specified position
+        if self.is_valid_position(row, col):
+            self.board[row * self.cols + col] = ' '# Clear the position
+        if (row, col) in self.special_tiles: # Check if it's a special tile
+            self.special_tiles_occupied[(row, col)] = False # Mark the special tile as unoccupied
+
+    def reset_board(self):
+        # Clear all letters from the board
+        self.board = [' ' for _ in range(self.rows * self.cols)] # Reset the board to empty spaces
+        self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Reset special tiles
+
+    def is_center_covered(self):
+        # Check if the center position has a letter
+        return self.is_occupied(self.center[0], self.center[1]) # Check if the center is occupied
+    
 game = Board(15, 15) # Create a new game board
 print(game) # Print the initial empty board
+        
+    
+
+        
+"""
 Game Rule Enforcement
 Is center covered: Check if the center position has a letter
 Is valid position: Ensure coordinates are within bounds
