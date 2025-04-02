@@ -72,3 +72,12 @@ class WordValidator:
         """
         from difflib import get_close_matches
         return get_close_matches(word.lower(), self.dictionary, n=max_suggestions)
+
+    def dictionary_size(self):
+        """
+        Get the number of words in the dictionary.
+        
+        Returns:
+            int: The number of words in the dictionary.
+        """
+        return len(self.dictionary)
