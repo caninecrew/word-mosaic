@@ -10,12 +10,12 @@
 ## 🧠 Core Game Logic
 - [X] Implement 15x15 grid system
 - [X] Create letter bank with 20 randomized letters based on frequency distributions
-- [ ] Develop word validation system
-- [ ] Implement placement rules:
+- [X] Develop word validation system
+- [X] Implement placement rules:
   - [X] First word must cross center
-  - [ ] All new words must connect to existing mosaic
+  - [X] All new words must connect to existing mosaic
   - [X] Ensure all word connections are valid
-- [ ] Create letter distribution algorithm
+- [X] Create letter distribution algorithm - works for this purpose
 
 ## 🎮 User Interface
 - [ ] Design main game board layout
@@ -51,7 +51,7 @@
 - [ ] Implement replay option
 
 ## 🧪 Testing
-- [ ] Create unit tests for core game logic
+- [X] Create unit tests for core game logic
 - [ ] Test scoring system accuracy
 - [ ] Validate word dictionary integration
 - [ ] Test game progression and flow
