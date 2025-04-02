@@ -584,15 +584,13 @@ if __name__ == "__main__":
     print(game)
     print(f"Word at center (horizontal): {game.get_horizontal_word(7, 7)}")
     
-    
     # Test 2: Word placement - Make a compatible crossword 
     print("\n--- Test 2: Word Placement ---")
-    # Place "ORANGE" vertically, which properly intersects with APPLE at the "A"
-    game.place_word("ORANGE", 4, 7, "vertical")
+    # Place a word that shares 'A' with APPLE
+    game.place_word("ANIMAL", 4, 7, "vertical")  # This shares 'A' at position (7,7)
     print(game)
     print("Words on board:", game.get_all_words())
     
-
     # Test 3: Error handling
     print("\n--- Test 3: Error Handling ---")
     try:
@@ -609,11 +607,12 @@ if __name__ == "__main__":
     
     # Test 4: Special tiles
     print("\n--- Test 4: Special Tiles ---")
-    print(f"Special tiles before: {game.get_special_tiles()}")
-    game.place_letter('Z', 0, 0)  # Place on DL tile
-    print(f"Special tiles after: {game.get_special_tiles()}")
-    print(f"Multiplier at (0,0): {game.get_special_tile_multiplier(0, 0)}")
-    print(f"Is special tile occupied: {game.special_tiles_occupied[(0, 0)]}")
+    test_board_special = Board(15, 15)  # Use a separate board for this test
+    print(f"Special tiles before: {test_board_special.get_special_tiles()}")
+    test_board_special.place_letter('Z', 0, 0)  # Place on DL tile
+    print(f"Special tiles after: {test_board_special.get_special_tiles()}")
+    print(f"Multiplier at (0,0): {test_board_special.get_special_tile_multiplier(0, 0)}")
+    print(f"Is special tile occupied: {test_board_special.special_tiles_occupied[(0, 0)]}")
     
     # Test 5: Board coverage
     print("\n--- Test 5: Board Coverage ---")
@@ -622,8 +621,8 @@ if __name__ == "__main__":
     
     # Test 6: Word identification
     print("\n--- Test 6: Word Identification ---")
-    horizontal = game.get_word_at_position(7, 7, "horizontal")
-    vertical = game.get_word_at_position(7, 7, "vertical")
+    horizontal = game.get_horizontal_word(7, 7)
+    vertical = game.get_vertical_word(7, 7)
     print(f"Horizontal word at (7,7): {horizontal}")
     print(f"Vertical word at (7,7): {vertical}")
     
@@ -643,7 +642,9 @@ if __name__ == "__main__":
     new_game = Board.from_json(board_state)
     print("Recreated board:")
     print(new_game)
-    print(f"Words on recreated board: {new_game.get_horizontal_word(7, 7)}")
+    print(f"Words on recreated board:")
+    for word in new_game.get_all_words():
+        print(f"  - {word}")
     
     # Test 10: Clear and reset
     print("\n--- Test 10: Clear and Reset ---")
@@ -659,17 +660,14 @@ if __name__ == "__main__":
     # Test 11: Complex word placement scenario
     print("\n--- Test 11: Complex Word Scenario ---")
     test_board = Board(15, 15)
-    test_board.place_letter('H', 5, 5)
-    test_board.place_letter('E', 5, 6)
-    test_board.place_letter('L', 5, 7)
-    test_board.place_letter('L', 5, 8)
-    test_board.place_letter('O', 5, 9)
+    test_board.place_word("HELLO", 5, 5, "horizontal")  # Use place_word instead of individual letters
+    test_board.place_word("YELLOW", 3, 7, "vertical")   # Will share the 'L' with HELLO
     print(test_board)
-    print(f"Word placed: {test_board.get_horizontal_word(5, 5)}")
+    print(f"Words on board: {test_board.get_all_words()}")
     
     # Test 12: 2D representation
     print("\n--- Test 12: 2D Representation ---")
-    board_2d = game.get_board_2d()  # Use the original game board that has APPLE
+    board_2d = test_board.get_board_2d()  # Use test_board from Test 11
     print("First 5 rows of 2D board:")
     for row in board_2d[:5]:
         print(''.join([f"[{c if c != ' ' else ' '}]" for c in row[:5]]))
