@@ -153,17 +153,34 @@ class Board:
                     valid_positions.append((row, col))
         return valid_positions
     
+    def get_special_tiles(self):
+        # Retrieve special tiles and their multipliers
+        return {pos: self.special_tiles[pos] for pos in self.special_tiles if not self.special_tiles_occupied[pos]} # Return unoccupied special tiles
+    
+    def get_special_tile_multiplier(self, row, col):
+        # Get the multiplier for a special tile at the specified position
+        return self.special_tiles.get((row, col), None)
+    
+    def get_state(self):
+        # Return the current state of the board
+        return {
+            'board': self.board,
+            'special_tiles': self.special_tiles_occupied,
+            'center': self.center,
+            'coverage': self.calculate_coverage()
+        }
+        # Example usage: 
 
-game = Board(15, 15) # Create a new game board
-print(game) # Print the initial empty board
+if __name__ == "__main__":
+    # Create a new game board and display it
+
+    game = Board(15, 15) # Create a new game board
+    print(game) # Print the initial empty board
         
     
 
         
 """
-Get occupied positions: List all positions with letters
-Calculate coverage: Determine percentage of board filled
-Find valid placements: Identify legal positions for new letters
 Display Support
 To string: Generate string representation of board
 Get state: Return the current state for the GUI to display"
