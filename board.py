@@ -107,6 +107,38 @@ class Board:
             return self.get_vertical_word(row, col)
         else:
             raise ValueError("Invalid direction")
+        
+    def get_all_words(self):
+        # Find all words on the board
+        words = []
+        for row in range(self.rows): # Loop through each row
+            for col in range(self.cols): # Loop through each column
+                if self.is_occupied(row, col):
+                    # Get horizontal and vertical words
+                    words.append(self.get_horizontal_word(row, col)) # Add horizontal word
+                    words.append(self.get_vertical_word(row, col)) # Add vertical word
+        return list(set(words)) # Return unique words found
+    
+    def get_words_formed(self, row, col, letter):
+        # Find all words formed by placing a new letter(s)
+        words = []
+        if self.is_valid_position(row, col) and not self.is_occupied(row, col): # Check if the position is valid and not occupied
+            self.place_letter(letter, row, col) # Place the letter
+            words.append(self.get_horizontal_word(row, col)) # Add horizontal word
+            words.append(self.get_vertical_word(row, col)) # Add vertical word
+            self.clear_position(row, col) # Clear the position after checking
+        return list(set(words)) # Return unique words formed
+    
+    def get_occupied_positions(self):
+        # List all occupied positions on the board
+        occupied_positions = []
+        for row in range(self.rows): # Loop through each row
+            for col in range(self.cols): # Loop through each column
+                if self.is_occupied(row, col): # Check if the position is occupied
+                    occupied_positions.append((row, col)) # Add occupied position to the list
+        return occupied_positions # Return the list of occupied positions
+    
+    
 
 game = Board(15, 15) # Create a new game board
 print(game) # Print the initial empty board
@@ -115,16 +147,6 @@ print(game) # Print the initial empty board
 
         
 """
-Game Rule Enforcement
-Is center covered: Check if the center position has a letter
-Is valid position: Ensure coordinates are within bounds
-Has adjacent letter: Check if a position connects to existing letters
-Get word at position: Extract a complete word given a position and direction
-Word Formation
-Get horizontal word: Retrieve a word reading from left to right
-Get vertical word: Retrieve a word reading from top to bottom
-Get all words: Find all words formed by a new placement
-Board Analysis
 Get occupied positions: List all positions with letters
 Calculate coverage: Determine percentage of board filled
 Find valid placements: Identify legal positions for new letters
