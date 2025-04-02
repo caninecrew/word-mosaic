@@ -50,15 +50,29 @@ class Board:
             
         Raises:
             ValueError: If the position is already occupied or invalid
+            TypeError: If letter is not a string
+            ValueError: If letter is not a single alphabetic character
         """
-        # Place a letter on the board at the specified position
-        if self.is_occupied(row, col): # Check if the position is occupied
-            raise ValueError("Position already occupied")
+        # Input validation
+        if not isinstance(letter, str):
+            raise TypeError("Letter must be a string")
+        if len(letter) != 1:
+            raise ValueError("Letter must be a single character")
+        if not letter.isalpha():
+            raise ValueError("Only alphabetic characters are allowed")
+        
+        # Position validation
         if not self.is_valid_position(row, col):
-            raise ValueError("Invalid position")
-        self.board[row * self.cols + col] = letter # Place the letter
-        if (row, col) in self.special_tiles: # Check if it's a special tile
-            self.special_tiles_occupied[(row, col)] = True # Mark the special tile as occupied
+            raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
+        if self.is_occupied(row, col):
+            raise ValueError(f"Position ({row}, {col}) is already occupied")
+        
+        # Place the letter
+        self.board[row * self.cols + col] = letter.upper()  # Convert to uppercase for consistency
+        
+        # Update special tile status
+        if (row, col) in self.special_tiles:
+            self.special_tiles_occupied[(row, col)] = True
 
     def is_occupied(self, row, col):
         """
@@ -83,8 +97,13 @@ class Board:
             
         Returns:
             str: The letter at the position, or None if position is invalid
+            
+        Raises:
+            ValueError: If position is outside board boundaries
         """
-        return self.board[row * self.cols + col] if self.is_valid_position(row, col) else None
+        if not self.is_valid_position(row, col):
+            raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
+        return self.board[row * self.cols + col]
     
     def clear_position(self, row, col):
         """
@@ -93,11 +112,16 @@ class Board:
         Args:
             row (int): Row position
             col (int): Column position
+            
+        Raises:
+            ValueError: If position is outside board boundaries
         """
-        if self.is_valid_position(row, col):
-            self.board[row * self.cols + col] = ' '# Clear the position
-        if (row, col) in self.special_tiles: # Check if it's a special tile
-            self.special_tiles_occupied[(row, col)] = False # Mark the special tile as unoccupied
+        if not self.is_valid_position(row, col):
+            raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
+        
+        self.board[row * self.cols + col] = ' '
+        if (row, col) in self.special_tiles:
+            self.special_tiles_occupied[(row, col)] = False
 
     def reset_board(self):
         """Clear all letters from the board and reset special tiles."""        
@@ -363,13 +387,25 @@ class Board:
             
         Returns:
             bool: True if placement is valid according to game rules
+            
+        Raises:
+            TypeError: If letter is not a string
+            ValueError: If letter is not a single alphabetic character
         """
-        # Check basic requirements
-        if not self.is_valid_position(row, col) or self.is_occupied(row, col): # Check if the position is valid and not occupied
+        # Validate letter
+        if not isinstance(letter, str):
+            raise TypeError("Letter must be a string")
+        if len(letter) != 1 or not letter.isalpha():
+            raise ValueError("Letter must be a single alphabetic character")
+        
+        # Check position and game rules
+        if not self.is_valid_position(row, col):
+            return False
+        if self.is_occupied(row, col):
             return False
             
         # First play must cross center
-        if first_play and (row != self.center[0] or col != self.center[1]): # Check if first play is at the center
+        if first_play and (row != self.center[0] or col != self.center[1]):
             return False
             
         # After first play, must connect to existing mosaic
@@ -420,18 +456,47 @@ class Board:
             
         Returns:
             bool: True if the word was successfully placed
-        """
-        if not self.is_valid_word_placement(word, row, col, direction): # Check if the word can be placed
-            return False
             
-        # Place each letter
-        for i, letter in enumerate(word): # Loop through each letter in the word
+        Raises:
+            ValueError: If the word or direction is invalid
+            ValueError: If the word doesn't fit on the board
+            ValueError: If the word conflicts with existing letters
+        """
+        # Input validation
+        if not isinstance(word, str) or not word:
+            raise ValueError("Word must be a non-empty string")
+        if not word.isalpha():
+            raise ValueError("Word must contain only alphabetic characters")
+        if direction not in ['horizontal', 'vertical']:
+            raise ValueError("Direction must be 'horizontal' or 'vertical'")
+        
+        # Check if word fits on board
+        if direction == 'horizontal' and col + len(word) > self.cols:
+            raise ValueError(f"Word '{word}' doesn't fit horizontally at position ({row}, {col})")
+        if direction == 'vertical' and row + len(word) > self.rows:
+            raise ValueError(f"Word '{word}' doesn't fit vertically at position ({row}, {col})")
+        
+        # Check for conflicts with existing letters
+        conflicts = []
+        for i, letter in enumerate(word):
             r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
-            if not self.is_occupied(r, c):  # Only place if not already occupied
-                self.place_letter(letter, r, c)
-                
+            if self.is_occupied(r, c) and self.get_letter(r, c) != letter:
+                conflicts.append((r, c, self.get_letter(r, c), letter))
+        
+        if conflicts:
+            conflict_details = [f"({r},{c}): '{existing}' vs '{new}'" for r, c, existing, new in conflicts]
+            raise ValueError(f"Word placement conflicts with existing letters: {', '.join(conflict_details)}")
+        
+        # Place the word
+        for i, letter in enumerate(word.upper()):  # Convert to uppercase
+            r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
+            if not self.is_occupied(r, c):
+                self.board[r * self.cols + c] = letter
+                if (r, c) in self.special_tiles:
+                    self.special_tiles_occupied[(r, c)] = True
+                    
         return True
-    
+
     def get_board_2d(self):
         """
         Return the board as a 2D array for easier display in the UI.
@@ -447,6 +512,7 @@ class Board:
                 row.append(self.board[r * self.cols + c]) # Add each letter to the row
             board_2d.append(row) # Add the row to the 2D array
         return board_2d # Return the complete 2D board
+    
     def validate_word(self, word):
         """
         Check if a word is valid according to game rules.
@@ -455,9 +521,16 @@ class Board:
             word (str): The word to validate
             
         Returns:
-            bool: True if the word is valid (e.g., at least 2 letters)
+            bool: True if the word is valid
+        
+        Raises:
+            TypeError: If word is not a string
         """
-        return isinstance(word, str) and len(word) >= 2 and word.isalpha() # Check if the word is valid
+        if not isinstance(word, str):
+            raise TypeError("Word must be a string")
+        
+        # Check minimum length and all alphabetic characters
+        return len(word) >= 2 and word.isalpha()
     
     def to_json(self):
         """Convert the board to a JSON-serializable dictionary."""
