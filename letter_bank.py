@@ -1,4 +1,4 @@
-
+import random
 
 class LetterBank:
     # Letter distribution based on English language frequency from the Scrabble game
@@ -51,7 +51,12 @@ class LetterBank:
     def bank_empty(self):
         """Check if the letter bank is empty."""
         return self.letter_bank_total == 0
-
+    
+    def _get_random_letter(self):
+        """Get a random letter from the letter bank."""
+        letters = [letter for letter, count in self.letter_bank.items() if count > 0]
+        return random.choice(letters) if letters else None
+    
 class PlayerHand:
     def __init__(self):
         self.hand = {}
