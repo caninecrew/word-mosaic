@@ -20,6 +20,16 @@ class Board:
             board_str += '\n' # Add a newline after each row
         return board_str # Return the complete board string
     
+    def place_letter(self, letter, row, col):
+        # Place a letter on the board at the specified position
+        if self.is_occupied(row, col): # Check if the position is occupied
+            raise ValueError("Position already occupied")
+        if not self.is_valid_position(row, col):
+            raise ValueError("Invalid position")
+        self.board[row * self.cols + col] = letter # Place the letter
+        if (row, col) in self.special_tiles: # Check if it's a special tile
+            self.special_tiles_occupied[(row, col)] = True # Mark the special tile as occupied
+        
 """
 Core Properties
 Grid storage: Your 2D representation of the board (already started)
