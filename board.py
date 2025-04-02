@@ -618,6 +618,24 @@ class Board:
                 return True
         return False
         
+    def find_potential_words(self, available_letters, dictionary):
+        """
+        Find potential words that could be placed on the board.
+        
+        Args:
+            available_letters (list): List of available letters
+            dictionary (list): List of valid words
+            
+        Returns:
+            list: Tuples of (word, row, col, direction, score)
+        """
+        potential_words = []
+        
+        # This would be a more complex implementation using available letters
+        # and checking against valid positions
+        
+        return potential_words
+    
     def to_json(self):
         """Convert the board to a JSON-serializable dictionary."""
         return {
