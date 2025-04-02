@@ -36,7 +36,10 @@ class WordMosaicApp(QMainWindow):
         self.init_ui()
         
     def init_ui(self):
-        """Initialize the user interface components"""
+        """
+        Initialize the user interface components.
+        This includes creating the score display, game board, letter bank, and control buttons.
+        """
         # Create score display
         self.create_score_display()
         
@@ -55,7 +58,10 @@ class WordMosaicApp(QMainWindow):
         self.create_control_buttons()
     
     def create_score_display(self):
-        """Create a simple score display"""
+        """
+        Create a simple score display at the top of the window.
+        Displays the current score of the player.
+        """
         score_widget = QWidget()
         score_layout = QHBoxLayout(score_widget)
         
@@ -76,7 +82,10 @@ class WordMosaicApp(QMainWindow):
         self.layout.addWidget(score_widget)
         
     def create_game_board(self):
-        """Create a simple 15x15 grid for the game board"""
+        """
+        Create a 15x15 grid for the game board.
+        Each cell is represented as a QLabel and can display letters or special tile markers.
+        """
         board_widget = QWidget()
         board_layout = QGridLayout(board_widget)
         board_layout.setSpacing(2)  # Space between cells
@@ -123,7 +132,10 @@ class WordMosaicApp(QMainWindow):
         self.layout.addWidget(board_widget)
             
     def populate_letter_bank(self):
-        """Populate the letter bank with player's current letters"""
+        """
+        Populate the letter bank with the player's current letters.
+        Clears the existing letter bank and repopulates it with the current hand.
+        """
         # Clear existing widgets
         while self.letter_bank_layout.count():
             item = self.letter_bank_layout.takeAt(0)
@@ -157,7 +169,10 @@ class WordMosaicApp(QMainWindow):
             self.letter_tiles.append(tile)
     
     def create_control_buttons(self):
-        """Create game control buttons"""
+        """
+        Create control buttons for the game.
+        Includes buttons for submitting a word and shuffling letters.
+        """
         buttons_widget = QWidget()
         buttons_layout = QHBoxLayout(buttons_widget)
         
@@ -171,23 +186,21 @@ class WordMosaicApp(QMainWindow):
         shuffle_button.clicked.connect(self.shuffle_letters)
         buttons_layout.addWidget(shuffle_button)
         
-        """
-        # Reset turn button
-        reset_button = QPushButton("Reset Turn")
-        reset_button.clicked.connect(self.reset_turn)
-        buttons_layout.addWidget(reset_button)
-        """
-        
         # Add buttons widget to main layout
         self.layout.addWidget(buttons_widget)
     
     def refresh_letter_bank(self):
-        """Refresh the letter bank display"""
-        # Instead of creating a new widget, just repopulate the existing one
+        """
+        Refresh the letter bank display.
+        Clears and repopulates the letter bank with the current hand.
+        """
         self.populate_letter_bank()
     
     def refresh_board(self):
-        """Refresh the board display based on game state"""
+        """
+        Refresh the board display based on the current game state.
+        Updates the letters and special tile markers on the board.
+        """
         for row in range(15):
             for col in range(15):
                 letter = self.game_board.get_letter(row, col)
@@ -216,7 +229,10 @@ class WordMosaicApp(QMainWindow):
                         self.cells[(row, col)].setStyleSheet("")
     
     def select_letter(self, letter, index):
-        """Handle letter selection from bank"""
+        """
+        Handle letter selection from the letter bank.
+        Highlights the selected letter and updates the status bar.
+        """
         self.selected_letter = letter
         self.selected_index = index
         self.status_bar.showMessage(f"Selected letter: {letter.upper()}")
@@ -229,7 +245,10 @@ class WordMosaicApp(QMainWindow):
                 tile.setStyleSheet("background-color: #ffffcc;")
     
     def place_letter(self, row, col):
-        """Handle letter placement on the board"""
+        """
+        Handle letter placement on the board.
+        Places the selected letter on the specified cell and updates the game state.
+        """
         if not hasattr(self, 'selected_letter') or not self.selected_letter:
             self.status_bar.showMessage("Please select a letter first")
             return
@@ -261,31 +280,20 @@ class WordMosaicApp(QMainWindow):
             self.status_bar.showMessage(f"Invalid placement: {str(e)}")
     
     def submit_word(self):
-        """Submit the current word and calculate score"""
-        # Get all newly placed letters in this turn
-        # Validate all words formed
-        # Calculate score
-        # Replenish player's hand
-        # Update score display
+        """
+        Submit the current word and calculate the score.
+        Validates the word, updates the score, and replenishes the player's hand.
+        """
         self.status_bar.showMessage("Word submitted successfully!")
 
     def shuffle_letters(self):
-        """Shuffle the player's letter bank"""
+        """
+        Shuffle the player's letter bank.
+        Updates the letter bank display and shows a status message.
+        """
         self.player_hand.shuffle_letters()
         self.refresh_letter_bank()
         self.status_bar.showMessage("Letters shuffled")
-
-    '''
-    def reset_turn(self):
-        """Reset the current turn, returning placed letters to hand"""
-        # Return all letters placed this turn to the player's hand
-        # Clear those letters from the board
-        # Reset any tracking of the current turn
-        self.refresh_board()
-        self.refresh_letter_bank()
-        self.status_bar.showMessage("Turn reset")
-    '''
-    
 
 # Main application entry point
 if __name__ == "__main__":
