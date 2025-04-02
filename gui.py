@@ -109,16 +109,16 @@ class WordMosaicApp(QMainWindow):
     def create_letter_bank(self):
         """Create display for player's letters"""
         letter_bank_widget = QWidget()
-        letter_bank_layout = QHBoxLayout(letter_bank_widget)
+        self.letter_bank_layout = QHBoxLayout(letter_bank_widget)
         
         # Add a label for the letter bank
         bank_label = QLabel("Your Letters:")
         bank_label.setFont(QFont('Arial', 12))
-        letter_bank_layout.addWidget(bank_label)
+        self.letter_bank_layout.addWidget(bank_label)
         
         # Get actual letters from player hand
         self.letter_tiles = []
-        player_letters = self.player_hand.get_letters_as_list()
+        player_letters = self.player_hand.add_letter()
         
         for letter in player_letters:
             tile = QLabel(letter.upper())
@@ -131,11 +131,30 @@ class WordMosaicApp(QMainWindow):
             # Make letter tiles clickable
             tile.mousePressEvent = lambda event, l=letter: self.select_letter(l)
             
-            letter_bank_layout.addWidget(tile)
+            self.letter_bank_layout.addWidget(tile)
             self.letter_tiles.append(tile)
         
         # Add letter bank to main layout
         self.layout.addWidget(letter_bank_widget)
+    
+    def refresh_letter_bank(self):
+        """Refresh the letter bank display"""
+        # Clear existing letter bank
+        for i in reversed(range(self.letter_bank_layout.count())): 
+            self.letter_bank_layout.itemAt(i).widget().deleteLater()
+        
+        # Re-create letter bank
+        self.create_letter_bank()
+    
+    def refresh_board(self):
+        """Refresh the board display based on game state"""
+        for row in range(15):
+            for col in range(15):
+                letter = self.game_board.get_letter(row, col)
+                if letter:
+                    self.cells[(row, col)].setText(letter.upper())
+                else:
+                    self.cells[(row, col)].setText("")
     
     def select_letter(self, letter):
         """Handle letter selection from bank"""
