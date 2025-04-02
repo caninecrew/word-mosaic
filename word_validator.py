@@ -42,3 +42,19 @@ class WordValidator:
         """
         words = sentence.split()
         return self.validate_words(words)
+    
+    def load_custom_dictionary(self, dictionary_path):
+        """
+        Load a custom dictionary from a file.
+        
+        Args:
+            dictionary_path (str): Path to the custom dictionary file.
+        """
+        try:
+            with open(dictionary_path, "r") as file:
+                self.dictionary = set(word.strip().lower() for word in file)
+            print(f"Custom dictionary loaded from '{dictionary_path}'.")
+        except FileNotFoundError:
+            print(f"Error: Dictionary file '{dictionary_path}' not found.")
+        except Exception as e:
+            print(f"Error loading dictionary: {e}")
