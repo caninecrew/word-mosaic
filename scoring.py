@@ -1,19 +1,26 @@
-__init__(self, special_tiles)
 
-calculate_word_score(self, word, positions)
+class Scoring:
+    def __init__(self, special_tiles):
+        pass
 
-calculate_turn_score(self, words)
+    def calculate_word_score(self, word, positions):
+        pass
 
-get_letter_score(self, letter)
+    def calculate_turn_score(self, words):
+        pass
 
-apply_special_tiles(self, word, positions)
+    def get_letter_score(self, letter):
+        pass
 
-is_bingo(self, word)
+    def apply_special_tiles(self, word, positions):
+        pass
 
-get_total_score(self, words)
+    is_bingo(self, word)
 
-reset_score(self)
+    get_total_score(self, words)
 
-load_letter_score(self, letter_score_file)
+    reset_score(self)
 
-validate_word_positions(self, word, positions)
+    load_letter_score(self, letter_score_file)
+
+    validate_word_positions(self, word, positions)
