@@ -9,7 +9,7 @@
 
 ## 🧠 Core Game Logic
 - [X] Implement 15x15 grid system
-- [ ] Create letter bank with 20 randomized letters based on frequency distributions
+- [X] Create letter bank with 20 randomized letters based on frequency distributions
 - [ ] Develop word validation system
 - [ ] Implement placement rules:
   - [ ] First word must cross center
