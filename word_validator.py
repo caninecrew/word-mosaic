@@ -17,3 +17,15 @@ class WordValidator:
             bool: True if the word is valid, False otherwise
         """
         return word.lower() in self.dictionary
+
+    def validate_words(self, words):
+        """
+        Validate a list of words.
+        
+        Args:
+            words (list): List of words to validate
+            
+        Returns:
+            list: List of valid words
+        """
+        return [word for word in words if self.validate_word(word)]
