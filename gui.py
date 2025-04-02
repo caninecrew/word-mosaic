@@ -89,7 +89,7 @@ class WordMosaicApp(QMainWindow):
         board_widget = QWidget()
         board_layout = QGridLayout(board_widget)
         board_layout.setSpacing(2)  # Space between cells
-        
+
         # Create 15x15 grid of cells
         self.cells = {}
         for row in range(15):
@@ -99,18 +99,31 @@ class WordMosaicApp(QMainWindow):
                 cell.setAlignment(Qt.AlignCenter)
                 cell.setFrameShape(QFrame.Box)  # Add border
                 cell.setFont(QFont('Arial', 14, QFont.Bold))
-                
-                # Highlight center cell
-                if row == 7 and col == 7:
-                    cell.setStyleSheet("background-color: #ffcccc;")
-                    
+
+                # Highlight special tiles
+                special_tile = self.game_board.get_special_tile_multiplier(row, col)
+                if special_tile == 'TW':
+                    cell.setStyleSheet("background-color: #ff9999;")  # Triple Word
+                    cell.setText("TW")
+                elif special_tile == 'DW':
+                    cell.setStyleSheet("background-color: #ffcc99;")  # Double Word
+                    cell.setText("DW")
+                elif special_tile == 'TL':
+                    cell.setStyleSheet("background-color: #9999ff;")  # Triple Letter
+                    cell.setText("TL")
+                elif special_tile == 'DL':
+                    cell.setStyleSheet("background-color: #99ccff;")  # Double Letter
+                    cell.setText("DL")
+                elif row == 7 and col == 7:
+                    cell.setStyleSheet("background-color: #ffcccc;")  # Center tile
+
                 # Add click event
                 cell.mousePressEvent = lambda event, r=row, c=col: self.place_letter(r, c)
-                
+
                 # Store cell reference and add to layout
                 self.cells[(row, col)] = cell
                 board_layout.addWidget(cell, row, col)
-        
+
         # Add board to main layout
         self.layout.addWidget(board_widget)
         
