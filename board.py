@@ -29,15 +29,16 @@ class Board:
         self.board[row * self.cols + col] = letter # Place the letter
         if (row, col) in self.special_tiles: # Check if it's a special tile
             self.special_tiles_occupied[(row, col)] = True # Mark the special tile as occupied
+
+    def is_occupied(self, row, col):
+        # Check if the specified position is occupied
+        return self.board[row * self.cols + col] != ' '
+    
+    def get_letter(self, row, col):
+        # Retrieve the letter at the specified position
+        return self.board[row * self.cols + col] if self.is_valid_position(row, col) else None
         
 """
-Core Properties
-Grid storage: Your 2D representation of the board (already started)
-Board dimensions: Rows and columns (already implemented)
-Center position: Tracked for the first word placement requirement
-Special tile locations: For bonus multiplier tiles
-Essential Methods
-Place letter: Add a letter to a specific position
 Is occupied: Check if a position already has a letter
 Get letter: Retrieve the letter at a given position
 Clear position: Remove a letter from a position
