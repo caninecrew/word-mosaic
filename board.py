@@ -87,6 +87,9 @@ class Board:
         return board_str # Return the complete board string
     
     def place_letter(self, letter, row, col):
+        print(f"Placing letter '{letter}' at ({row}, {col})")
+        print(f"Board dimensions: {self.rows}x{self.cols}")
+        print(f"Board state: {self.board}")
         """
         Place a letter on the board at the specified position.
 
