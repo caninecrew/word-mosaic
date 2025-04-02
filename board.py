@@ -1,32 +1,42 @@
 from word_validator import WordValidator
+from scoring import Scoring
+
+from scoring import Scoring
 
 class Board:
-    """
-    Represents the game board for Word Mosaic.
-    
-    The board is a grid of rows x cols cells where letters can be placed
-    to form words. It includes special tiles that provide score multipliers.
-    """
-    def __init__(self, rows, cols, db_path="dictionary.db"):
+    def __init__(self, rows, cols, special_tiles):
+        self.rows = rows
+        self.cols = cols
+        self.board = [['' for _ in range(cols)] for _ in range(rows)]
+        self.special_tiles = special_tiles  # Pass special tiles to the board
+        self.scoring = Scoring(special_tiles)  # Initialize Scoring with special tiles
+
+    def calculate_turn_score(self, words):
         """
-        Initialize a new game board with the specified dimensions.
-        
+        Calculate the total score for all words formed during a turn.
+
         Args:
-            rows (int): Number of rows in the board
-            cols (int): Number of columns in the board
+            words (list): A list of tuples, where each tuple contains:
+                          - word (str): The word formed.
+                          - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+
+        Returns:
+            int: The total score for the turn.
         """
-        self.rows = rows # Store the number of rows
-        self.cols = cols # Store the number of columns
-        self.board = [' ' for _ in range(rows * cols)] # Initialize the board with empty spaces
-        self.center = (rows // 2, cols // 2) # Calculate the center position
-        self.special_tiles = { # Define special tiles with their multipliers
-            (0, 0): 'DL', (0, 7): 'DL', (0, 14): 'DL',
-            (7, 0): 'DL', (7, 7): 'TL', (7, 14): 'DL',
-            (14, 0): 'DL', (14, 7): 'DL', (14, 14): 'DL'
-        }
-        self.special_tiles_occupied = {pos: False for pos in self.special_tiles} # Track if special tiles are occupied
-        self.define_special_tiles() # Initialize special tiles
-        self.word_validator = WordValidator(db_path) # Initialize the word validator
+        return self.scoring.calculate_turn_score(words)
+
+    def validate_word_positions(self, word, positions):
+        """
+        Validate that the word's positions align with the board's rules.
+
+        Args:
+            word (str): The word to validate.
+            positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+
+        Returns:
+            bool: True if the word is valid, False otherwise.
+        """
+        return self.scoring.validate_word_positions(word, positions)
     
     def define_special_tiles(self):
             """
