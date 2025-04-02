@@ -124,15 +124,17 @@ class Board:
     def is_occupied(self, row, col):
         """
         Check if the specified position is occupied by a letter.
-        
+
         Args:
             row (int): Row position
             col (int): Column position
-            
+
         Returns:
             bool: True if position contains a letter, False otherwise
         """
-        return self.board[row * self.cols + col] != ' ' # Check if the position is occupied
+        if not self.is_valid_position(row, col):
+            raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
+        return self.board[row][col] != ''  # Check if the position is occupied
     
     def get_letter(self, row, col):
         """
