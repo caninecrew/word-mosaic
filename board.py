@@ -564,9 +564,10 @@ if __name__ == "__main__":
     print(game)
     print(f"Word at center (horizontal): {game.get_horizontal_word(7, 7)}")
     
-    # Test 2: Word placement
+    # Test 2: Word placement - Make a compatible crossword
     print("\n--- Test 2: Word Placement ---")
-    game.place_word("ORANGE", 6, 9, "vertical")
+    # Place "RANGE" vertically, which crosses "APPLE" at the "A"
+    game.place_word("RANGE", 5, 7, "vertical")
     print(game)
     print("Words on board:", game.get_all_words())
     
@@ -629,9 +630,9 @@ if __name__ == "__main__":
     print(game)
     print(f"Board coverage after reset: {game.calculate_coverage():.2f}%")
     
-    # Test 11: Complex word placement scenario
+    # Test 11: Complex word placement scenario - Create a new crossword pattern
     print("\n--- Test 11: Complex Word Scenario ---")
-    # Set up a small crossword
+    # Set up a small crossword that works together
     game.place_word("HELLO", 5, 5, "horizontal")
     game.place_word("WORLD", 3, 7, "vertical")
     game.place_word("CODE", 8, 4, "horizontal")
@@ -653,4 +654,3 @@ if __name__ == "__main__":
         print(f"Is '{word}' valid? {game.validate_word(word)}")
     
     print("\nAll tests completed!")
-
