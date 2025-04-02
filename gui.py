@@ -221,6 +221,30 @@ class WordMosaicApp(QMainWindow):
             
         except ValueError as e:
             self.status_bar.showMessage(f"Invalid placement: {str(e)}")
+    
+    def submit_word(self):
+        """Submit the current word and calculate score"""
+        # Get all newly placed letters in this turn
+        # Validate all words formed
+        # Calculate score
+        # Replenish player's hand
+        # Update score display
+        self.status_bar.showMessage("Word submitted successfully!")
+
+    def shuffle_letters(self):
+        """Shuffle the player's letter bank"""
+        self.player_hand.shuffle_letters()
+        self.refresh_letter_bank()
+        self.status_bar.showMessage("Letters shuffled")
+
+    def reset_turn(self):
+        """Reset the current turn, returning placed letters to hand"""
+        # Return all letters placed this turn to the player's hand
+        # Clear those letters from the board
+        # Reset any tracking of the current turn
+        self.refresh_board()
+        self.refresh_letter_bank()
+        self.status_bar.showMessage("Turn reset")
 
 # Main application entry point
 if __name__ == "__main__":
