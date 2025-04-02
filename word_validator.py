@@ -81,3 +81,22 @@ class WordValidator:
             int: The number of words in the dictionary.
         """
         return len(self.dictionary)
+    
+    def validate_words_with_feedback(self, words):
+        """
+        Validate a list of words and return both valid and invalid words.
+        
+        Args:
+            words (list): List of words to validate.
+            
+        Returns:
+            dict: A dictionary with 'valid' and 'invalid' keys containing respective word lists.
+        """
+        valid_words = []
+        invalid_words = []
+        for word in words:
+            if self.validate_word(word):
+                valid_words.append(word)
+            else:
+                invalid_words.append(word)
+        return {"valid": valid_words, "invalid": invalid_words}
