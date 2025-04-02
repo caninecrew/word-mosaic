@@ -43,6 +43,8 @@ Is occupied: Check if a position already has a letter
 Get letter: Retrieve the letter at a given position
 Clear position: Remove a letter from a position
 Reset board: Clear all letters from the board
+game = Board(15, 15) # Create a new game board
+print(game) # Print the initial empty board
 Game Rule Enforcement
 Is center covered: Check if the center position has a letter
 Is valid position: Ensure coordinates are within bounds
