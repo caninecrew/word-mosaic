@@ -174,6 +174,16 @@ class Board:
         return ''.join(self.board[row * self.cols + start_col:end_col + 1]) # Extract the word from the board
     
     def get_vertical_word(self, row, col):
+        """
+        Retrieve a complete word reading vertically from the given position.
+        
+        Args:
+            row (int): Row position
+            col (int): Column position
+            
+        Returns:
+            str: The complete vertical word containing this position
+        """
         # Retrieve a word reading from top to bottom
         if not self.is_valid_position(row, col) or not self.is_occupied(row, col):
             return ""
