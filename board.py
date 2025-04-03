@@ -678,6 +678,10 @@ class Board:
         Returns:
             int: The calculated score for the word.
         """
+        print(f"Calculating score for word: {word}, positions: {positions}")  # Debugging statement
+        if not isinstance(word, str):
+            raise TypeError(f"Expected 'word' to be a string, but got {type(word).__name__}: {word}")
+
         word_score = 0
         word_multiplier = 1
 
