@@ -315,27 +315,29 @@ class WordMosaicApp(QMainWindow):
             # Get the words formed during the turn
             words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
             print(f"Words formed: {words_formed}")  # Debugging statement
-            
+
             # Validate word positions
             for word, positions in words_formed:
                 print(f"Validating word: {word}, positions: {positions}")  # Debugging statement
+                if not isinstance(word, str):
+                    raise TypeError(f"Expected 'word' to be a string, but got {type(word).__name__}: {word}")
                 if not self.game_board.validate_word_positions(word, positions):
                     self.status_bar.showMessage(f"Invalid word placement: {word}")
                     return
-            
+
             # Calculate the turn score
             turn_score = self.game_board.calculate_turn_score(words_formed)
             self.score += turn_score
             self.score_value.setText(str(self.score))
-            
+
             # Replenish player's hand
             self.player_hand.refill(len(words_formed))
             self.refresh_letter_bank()
-            
+
             # Update the board and status
             self.refresh_board()
             self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
-        
+
         except Exception as e:
             self.status_bar.showMessage(f"Error submitting word: {str(e)}")
 
