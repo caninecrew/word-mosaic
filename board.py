@@ -360,6 +360,53 @@ class Board:
             if len(current_word) > 1:
                 words.append((current_word, positions))
 
+        print(f"Words detected: {words}")  # Debugging statement
+        return words
+    
+        """
+        Retrieve all words formed during the current turn.
+
+        Returns:
+            list: A list of tuples, where each tuple contains:
+                - word (str): The word formed.
+                - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+        """
+        words = []
+
+        # Horizontal words
+        for row in range(self.rows):
+            current_word = ""
+            positions = []
+            for col in range(self.cols):
+                letter = self.board[row][col]
+                if letter:
+                    current_word += letter
+                    positions.append((row, col))
+                else:
+                    if len(current_word) > 1:
+                        words.append((current_word, positions))
+                    current_word = ""
+                    positions = []
+            if len(current_word) > 1:
+                words.append((current_word, positions))
+
+        # Vertical words
+        for col in range(self.cols):
+            current_word = ""
+            positions = []
+            for row in range(self.rows):
+                letter = self.board[row][col]
+                if letter:
+                    current_word += letter
+                    positions.append((row, col))
+                else:
+                    if len(current_word) > 1:
+                        words.append((current_word, positions))
+                    current_word = ""
+                    positions = []
+            if len(current_word) > 1:
+                words.append((current_word, positions))
+
         return words
     
     def get_words_formed(self, row, col, letter):
