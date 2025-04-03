@@ -65,6 +65,7 @@ class Scoring:
         turn_score = 0
 
         for word, positions in words:
+            print(f"Calculating score for word: {word}, positions: {positions}")  # Debugging statement
             # Calculate the score for each word
             word_score = self.calculate_word_score(word, positions)
             self.word_scores[word] = word_score  # Store the score for the word
