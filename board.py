@@ -667,56 +667,43 @@ class Board:
         """
         return self.word_validator.validate_word(word)
     
-    def calculate_word_score(self, word, row, col, direction):
+    def calculate_word_score(self, word, positions):
         """
-        Calculate score for a word based on letter values and multipliers.
-        
+        Calculate the score for a single word based on the letters and their positions on the board.
+
         Args:
-            word (str): The word to score
-            row (int): Starting row position
-            col (int): Column position
-            direction (str): Either 'horizontal' or 'vertical'
-            
+            word (str): The word to calculate the score for.
+            positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+
         Returns:
-            int: The calculated score for the word
+            int: The calculated score for the word.
         """
-        score = 0
+        word_score = 0
         word_multiplier = 1
-        
-        # Define letter values (A=1, B=3, etc.)
-        letter_values = {
-            'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4,
-            'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3,
-            'Q': 10, 'R': 1, 'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8,
-            'Y': 4, 'Z': 10
-        }
-        
-        # Calculate score based on letter position and special tiles
-        for i, letter in enumerate(word.upper()):
-            r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
-            letter_multiplier = 1
-            
-            # Apply special tile multipliers
-            tile_type = self.get_special_tile_multiplier(r, c)
-            if tile_type == 'DL':
-                letter_multiplier = 2
-            elif tile_type == 'TL':
-                letter_multiplier = 3
-            elif tile_type == 'DW':
-                word_multiplier *= 2
-            elif tile_type == 'TW':
-                word_multiplier *= 3
-                
-            score += letter_values.get(letter, 0) * letter_multiplier
-        
-        # Apply word multiplier and length bonus
-        final_score = score * word_multiplier
-        
-        # Word length bonus (5+ letters)
-        if len(word) >= 5:
-            final_score += (len(word) - 4) * 2
-            
-        return final_score
+
+        for i, letter in enumerate(word):
+            position = positions[i]
+            print(f"Calculating score for letter: {letter}, position: {position}")  # Debugging statement
+            letter_score = self.get_letter_score(letter)
+
+            # Check if the position has a special tile
+            if position in self.special_tiles:
+                special_tile = self.special_tiles[position]
+                if special_tile == 'DL':  # Double Letter
+                    letter_score *= 2
+                elif special_tile == 'TL':  # Triple Letter
+                    letter_score *= 3
+                elif special_tile == 'DW':  # Double Word
+                    word_multiplier *= 2
+                elif special_tile == 'TW':  # Triple Word
+                    word_multiplier *= 3
+
+            word_score += letter_score
+
+        # Apply word multiplier
+        word_score *= word_multiplier
+
+        return word_score
     
     def has_valid_moves(self, available_letters):
         """
