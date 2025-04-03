@@ -90,6 +90,7 @@ class Scoring:
         Returns:
             int: The score of the letter.
         """
+        print(f"Getting score for letter: {letter}")  # Debugging statement
         return self.letter_scores.get(letter.upper(), 0)  # Default to 0 if the letter is not found
 
 
