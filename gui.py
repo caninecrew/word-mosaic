@@ -314,9 +314,11 @@ class WordMosaicApp(QMainWindow):
         try:
             # Get the words formed during the turn
             words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
+            print(f"Words formed: {words_formed}")  # Debugging statement
             
             # Validate word positions
             for word, positions in words_formed:
+                print(f"Validating word: {word}, positions: {positions}")  # Debugging statement
                 if not self.game_board.validate_word_positions(word, positions):
                     self.status_bar.showMessage(f"Invalid word placement: {word}")
                     return
