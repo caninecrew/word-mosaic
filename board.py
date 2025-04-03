@@ -18,8 +18,8 @@ class Board:
 
         Args:
             words (list): A list of tuples, where each tuple contains:
-                          - word (str): The word formed.
-                          - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+                        - word (str): The word formed.
+                        - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
 
         Returns:
             int: The total score for the turn.
