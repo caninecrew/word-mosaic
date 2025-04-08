@@ -233,9 +233,9 @@ class WordMosaicApp(QMainWindow):
             for col in range(15):
                 letter = self.game_board.get_letter(row, col)
                 if letter:
-                    # Display the letter if present
+                    # Display the letter if present, using letter bank color
                     self.cells[(row, col)].setText(letter.upper())
-                    self.cells[(row, col)].setStyleSheet("background-color: #ffffff;")  # Reset to default background
+                    self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
                 else:
                     # Check if the cell is a special tile
                     special_tile = self.game_board.get_special_tile_multiplier(row, col)
@@ -296,8 +296,9 @@ class WordMosaicApp(QMainWindow):
             # Try to place the letter using your game logic
             self.game_board.place_letter(self.selected_letter, row, col)
 
-            # Update the visual board
+            # Update the visual board with the letter and same color as inventory
             self.cells[(row, col)].setText(self.selected_letter.upper())
+            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
 
             # Mark special tile as occupied if applicable
             if (row, col) in self.game_board.special_tiles:
