@@ -37,7 +37,6 @@
 - [X] Implement letter replenishment after valid placements
 - [X] Create game state tracking
 - [X] Design player feedback system
-- [ ] Implement undo functionality (limited)
 
 ## ✨ Power-Ups & Features
 - [X] Create shuffle feature
