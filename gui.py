@@ -332,8 +332,14 @@ class WordMosaicApp(QMainWindow):
             for word_data in words_formed:
                 word, positions = word_data
                 print(f"Validating word: {word}, positions: {positions}")  # Debugging statement
+
+                # Ensure 'word' is a string before calling .upper()
                 if not isinstance(word, str):
                     raise TypeError(f"Expected 'word' to be a string, but got {type(word).__name__}: {word}")
+
+                # Convert word to uppercase for validation or display
+                word = word.upper()
+
                 if not self.game_board.validate_word_positions(word, positions):
                     self.status_bar.showMessage(f"Invalid word placement: {word}")
                     return

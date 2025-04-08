@@ -41,6 +41,7 @@ class Board:
         Returns:
             bool: True if the word is valid, False otherwise.
         """
+        print(f"Validating word positions: word={word}, positions={positions}")  # Debugging statement
         return self.scoring.validate_word_positions(word, positions)
     
     def define_special_tiles(self):

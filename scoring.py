@@ -1,4 +1,3 @@
-
 class Scoring:
     def __init__(self, special_tiles, letter_scores):
         """
@@ -31,6 +30,7 @@ class Scoring:
         for i, letter in enumerate(word):
             position = positions[i]
             letter_score = self.get_letter_score(letter)
+            print(f"Processing letter: {letter}, position: {position}, letter_score: {letter_score}")  # Debugging statement
 
             # Check if the position has a special tile
             if position in self.special_tiles:
@@ -92,7 +92,7 @@ class Scoring:
             int: The score of the letter.
         """
         print(f"Getting score for letter: {letter}")  # Debugging statement
-        return self.letter_scores.get(letter.upper(), 0)  # Default to 0 if the letter is not found
+        return self.letter_scores.get(letter.lower(), 0)  # Default to 0 if the letter is not found
 
 
     def apply_special_tiles(self, word, positions):
