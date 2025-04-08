@@ -123,27 +123,28 @@ class DroppableCell(QLabel):
         self.col = col
         self.setFixedSize(60, 60)  # Keep the larger size
         self.setAlignment(Qt.AlignCenter)
-        self.setFrameShape(QFrame.Box)  # Keep the frame outline for the board spaces
-        self.setStyleSheet("background-color: transparent; border: 1px solid #cccccc;")  # Keep border for spaces
+        self.setFrameShape(QFrame.NoFrame)  # Remove the frame to let CSS handle it uniformly
+        # Use only CSS for borders to ensure consistent spacing
+        self.setStyleSheet("background-color: transparent; border: 1px solid #cccccc; margin: 0px; padding: 0px;")
         
         # Create a layout for the cell to accommodate both letter and point value
         self.layout = QGridLayout(self)
-        self.layout.setContentsMargins(4, 4, 4, 4)  # Keep margins for better spacing
+        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove all margins for consistent spacing
         self.layout.setSpacing(0)
         
         # Create label for the letter display without a border
         self.letter_display = QLabel("")
-        self.letter_display.setFont(QFont('Arial', 22, QFont.Bold))  # Decreased from 26 to 22
+        self.letter_display.setFont(QFont('Arial', 22, QFont.Bold))
         self.letter_display.setAlignment(Qt.AlignCenter)
-        self.letter_display.setFrameShape(QFrame.NoFrame)  # Keep letter frame removed
-        self.letter_display.setStyleSheet("background-color: transparent; border: none;")  # No border for letter
+        self.letter_display.setFrameShape(QFrame.NoFrame)
+        self.letter_display.setStyleSheet("background-color: transparent; border: none;")
         self.layout.addWidget(self.letter_display, 0, 0, 2, 1, Qt.AlignCenter)
         
         # Create label for the point value without a border
         self.point_label = QLabel("")
         self.point_label.setFont(QFont('Arial', 10))
-        self.point_label.setFrameShape(QFrame.NoFrame)  # Keep point value frame removed
-        self.point_label.setStyleSheet("color: #333333; background-color: transparent; border: none;")  # No border for point value
+        self.point_label.setFrameShape(QFrame.NoFrame)
+        self.point_label.setStyleSheet("color: #333333; background-color: transparent; border: none;")
         self.layout.addWidget(self.point_label, 1, 0, 1, 1, Qt.AlignBottom | Qt.AlignRight)
         
         # Store original state attributes
@@ -353,9 +354,13 @@ class WordMosaicApp(QMainWindow):
         Each cell is represented as a QLabel and can display letters or special tile markers.
         """
         board_widget = QWidget()
+        # Create a grid layout with zero spacing for perfect alignment
         board_layout = QGridLayout(board_widget)
-        board_layout.setSpacing(1)  # Reduced spacing between cells for a tighter grid
+        board_layout.setSpacing(0)  # Set to zero for perfect grid alignment
         board_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins around the grid
+        
+        # Ensure board widget doesn't add any additional spacing
+        board_widget.setContentsMargins(0, 0, 0, 0)
 
         # Create 15x15 grid of cells
         self.cells = {}
@@ -364,34 +369,34 @@ class WordMosaicApp(QMainWindow):
                 cell = DroppableCell(row, col, board_widget)
                 # Note: cell size is now defined in DroppableCell class (60x60)
                 
-                # Highlight special tiles
+                # Highlight special tiles - using consistent border styling
                 special_tile = self.game_board.get_special_tile_multiplier(row, col)
                 if special_tile == 'TW':
-                    cell.setStyleSheet("background-color: #ff9999; border: 1px solid #dddddd;")  # Triple Word
+                    cell.setStyleSheet("background-color: #ff9999; border: 1px solid #999999; margin: 0px; padding: 0px;")  # Triple Word
                     cell.setText("TW")
                     cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif special_tile == 'DW':
-                    cell.setStyleSheet("background-color: #ffcc99; border: 1px solid #dddddd;")  # Double Word
+                    cell.setStyleSheet("background-color: #ffcc99; border: 1px solid #999999; margin: 0px; padding: 0px;")  # Double Word
                     cell.setText("DW")
                     cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif special_tile == 'TL':
-                    cell.setStyleSheet("background-color: #9999ff; border: 1px solid #dddddd;")  # Triple Letter
+                    cell.setStyleSheet("background-color: #9999ff; border: 1px solid #999999; margin: 0px; padding: 0px;")  # Triple Letter
                     cell.setText("TL")
                     cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif special_tile == 'DL':
-                    cell.setStyleSheet("background-color: #99ccff; border: 1px solid #dddddd;")  # Double Letter
+                    cell.setStyleSheet("background-color: #99ccff; border: 1px solid #999999; margin: 0px; padding: 0px;")  # Double Letter
                     cell.setText("DL")
                     cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif row == 7 and col == 7:
-                    cell.setStyleSheet("background-color: #ffcccc; border: 1px solid #dddddd;")  # Center tile
+                    cell.setStyleSheet("background-color: #ffcccc; border: 1px solid #999999; margin: 0px; padding: 0px;")  # Center tile
                     cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
 
                 # Store cell reference and add to layout
                 self.cells[(row, col)] = cell
                 board_layout.addWidget(cell, row, col)
 
-        # Add board to main layout
-        self.layout.addWidget(board_widget)
+        # Add board to main layout with appropriate alignment
+        self.layout.addWidget(board_widget, 0, Qt.AlignCenter)
             
     def populate_letter_bank(self):
         """
