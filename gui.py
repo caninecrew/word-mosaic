@@ -101,29 +101,67 @@ class DroppableCell(QLabel):
         self.setAlignment(Qt.AlignCenter)
         self.setFrameShape(QFrame.Box)
         
+        # Store original style for resetting after drag operations
+        self.original_style = None
+        self.original_text = None
+        self.original_font = None
+        
         # Enable drop events
         self.setAcceptDrops(True)
+
+    def mousePressEvent(self, event):
+        """Handle mouse clicks to place selected letters (for click-twice functionality)"""
+        if event.button() == Qt.LeftButton:
+            # Access main window to handle the letter placement
+            main_window = self.window()
+            if hasattr(main_window, 'place_letter'):
+                main_window.place_letter(self.row, self.col)
+                
+        super().mousePressEvent(event)
+        
+    def saveOriginalState(self):
+        """Save the current style, text and font to restore later."""
+        self.original_style = self.styleSheet()
+        self.original_text = self.text()
+        self.original_font = self.font()
+        
+    def restoreOriginalState(self):
+        """Restore the original style, text and font."""
+        if self.original_style is not None:
+            self.setStyleSheet(self.original_style)
+            self.setText(self.original_text)
+            self.setFont(self.original_font)
+            # Clear saved state
+            self.original_style = None
+            self.original_text = None
+            self.original_font = None
         
     def dragEnterEvent(self, event):
         """Accept the drag enter event if it has text data (our letter info)."""
         if event.mimeData().hasText():
+            # Save current state before changing appearance
+            self.saveOriginalState()
+            
+            # Visual feedback - highlight the cell with a dashed border
+            self.setStyleSheet("border: 2px dashed #333; background-color: #e6ffcc;")
             event.acceptProposedAction()
-            # Visual feedback - highlight the cell
-            self.setStyleSheet("border: 2px dashed #333;")
     
     def dragLeaveEvent(self, event):
         """Reset visual styling when drag leaves the cell."""
-        # Reset to original style based on current state/content
-        if self.text():  # If cell already has a letter
-            return  # Style will be managed by refresh_board
+        # Restore original state
+        self.restoreOriginalState()
         
-        # Otherwise reset based on special tile status if needed
-        app = QApplication.instance()
-        app.postEvent(self, QEvent(QEvent.Type.UpdateRequest))
+    def dragMoveEvent(self, event):
+        """Handle drag move events to maintain visual feedback."""
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
     
     def dropEvent(self, event):
         """Handle the drop of a letter tile onto this cell."""
         if event.mimeData().hasText():
+            # Restore original state as the tile will be placed by the game logic
+            self.restoreOriginalState()
+            
             # Extract the letter and index from mime data
             data = event.mimeData().text().split(',')
             if len(data) == 2:
@@ -131,7 +169,6 @@ class DroppableCell(QLabel):
                 index = int(index)
                 
                 # Call the game's place_letter method with this cell's coordinates
-                # We need to access the main window (parent of the parent widget)
                 main_window = self.window()
                 if hasattr(main_window, 'place_tile_from_drop'):
                     main_window.place_tile_from_drop(letter, index, self.row, self.col)
@@ -481,7 +518,12 @@ class WordMosaicApp(QMainWindow):
             col (int): The column to place the letter at
         """
         try:
-            # Handle blank tiles
+            # Check if the position is valid before prompting for blank
+            # This ensures we only ask for blank input if the position is valid
+            if not self.game_board.is_valid_position(row, col) or self.game_board.is_occupied(row, col):
+                raise ValueError(f"Position ({row}, {col}) is invalid or already occupied")
+                
+            # Handle blank tiles after validating the position
             if letter == '0':
                 # Prompt the user to choose a letter for the blank tile
                 chosen_letter, ok = QInputDialog.getText(self, "Choose Letter", "Enter a letter for the blank tile:")
@@ -504,7 +546,7 @@ class WordMosaicApp(QMainWindow):
                 self.game_board.special_tiles_occupied[(row, col)] = True
 
             # Remove from player's hand
-            self.player_hand.remove_letter(letter)
+            self.player_hand.remove_letter('0' if letter != '0' and index >= 0 else letter)
 
             # Update letter bank display
             self.refresh_letter_bank()
