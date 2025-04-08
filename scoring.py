@@ -79,6 +79,8 @@ class Scoring:
         # Update the total score
         self.total_score += turn_score
 
+        print(f"Turn score: {turn_score}, Total score: {self.total_score}")  # Debugging statement
+
         return turn_score
 
     def get_letter_score(self, letter):

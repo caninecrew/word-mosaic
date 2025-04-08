@@ -324,6 +324,7 @@ class WordMosaicApp(QMainWindow):
         Validates the word, updates the score, and replenishes the player's hand.
         """
         try:
+            print("=== Starting word submission ===")
             # Get the words formed during the turn
             words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
             print(f"Words formed: {words_formed}")  # Debugging statement
@@ -340,24 +341,48 @@ class WordMosaicApp(QMainWindow):
                 # Convert word to uppercase for validation or display
                 word = word.upper()
 
+                print(f"Submitting word: {word}, positions: {positions}")  # Debugging statement
+                print(f"Current score before submission: {self.score}")  # Debugging statement
+
                 if not self.game_board.validate_word_positions(word, positions):
                     self.status_bar.showMessage(f"Invalid word placement: {word}")
                     return
 
             # Calculate the turn score
+            print("Calculating turn score...")
             turn_score = self.game_board.calculate_turn_score(words_formed)
+            print(f"Turn score calculated: {turn_score}")
+            
+            # Update total score
             self.score += turn_score
+            print(f"Updated total score: {self.score}")
             self.score_value.setText(str(self.score))
+            print(f"Score display updated to: {self.score_value.text()}")
 
             # Replenish player's hand
-            self.player_hand.refill(len(words_formed))
+            print(f"Replenishing player's hand with {len(words_formed)} new letters...")
+            print(f"Player hand before refill: {self.player_hand.letter_order}")
+            letters_added = self.player_hand.refill(len(words_formed))
+            print(f"Player hand after refill: {self.player_hand.letter_order}")
+            print(f"Letters added: {letters_added}")
+
+            # Update letter bank display
+            print("Refreshing letter bank display...")
             self.refresh_letter_bank()
 
             # Update the board and status
+            print("Refreshing board display...")
             self.refresh_board()
+            
+            # Update status message
+            print(f"Setting status message: Turn completed! Score: {turn_score}")
             self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
+            print("=== Word submission completed ===")
 
         except Exception as e:
+            print(f"Error submitting word: {str(e)}")
+            import traceback
+            traceback.print_exc()
             self.status_bar.showMessage(f"Error submitting word: {str(e)}")
 
     def shuffle_letters(self):

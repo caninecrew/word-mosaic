@@ -165,7 +165,14 @@ class Board:
         """
         if not self.is_valid_position(row, col):
             raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
-        return self.board[row * self.cols + col]
+        
+        # Debug information
+        print(f"Getting letter at position ({row}, {col})")
+        print(f"Board row data: {self.board[row]}")
+        print(f"Direct access method: self.board[row][col] = {self.board[row][col]}")
+        
+        # Return the letter at the specified position
+        return self.board[row][col]
     
     def clear_position(self, row, col):
         """
@@ -181,14 +188,18 @@ class Board:
         if not self.is_valid_position(row, col):
             raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
         
-        self.board[row * self.cols + col] = ' '
+        # Use consistent 2D array access
+        self.board[row][col] = ''
         if (row, col) in self.special_tiles:
             self.special_tiles_occupied[(row, col)] = False
 
     def reset_board(self):
         """Clear all letters from the board but keep special tiles."""
         print(f"Before reset: {self.special_tiles_occupied}")
-        self.board = [' ' for _ in range(self.rows * self.cols)]  # Reset the board to empty spaces
+        # Reset the board to empty using 2D array approach
+        for row in range(self.rows):
+            for col in range(self.cols):
+                self.board[row][col] = ''
         print(f"After reset: {self.special_tiles_occupied}")
 
     def is_center_covered(self):
@@ -261,10 +272,10 @@ class Board:
         while end_col < self.cols - 1 and self.is_occupied(row, end_col + 1):
             end_col += 1 # Move right to find the end of the word
             
-        # Build the word character by character (slice won't work properly with 1D array)
+        # Build the word character by character
         word = ""
         for c in range(start_col, end_col + 1):
-            word += self.board[row * self.cols + c]
+            word += self.board[row][c]  # Use consistent 2D array access
         return word
 
     def get_vertical_word(self, row, col):
@@ -294,7 +305,7 @@ class Board:
         # Build the word letter by letter
         word = "" # Initialize an empty string for the word
         for r in range(start_row, end_row + 1): # Loop through the rows
-            word += self.board[r * self.cols + col] # Add each letter to the word
+            word += self.board[r][col] # Use consistent 2D array access
         return word # Return the complete word
     
     def get_word_at_position(self, row, col, direction):
@@ -634,11 +645,11 @@ class Board:
             conflict_details = [f"({r},{c}): '{existing}' vs '{new}'" for r, c, existing, new in conflicts]
             raise ValueError(f"Word placement conflicts with existing letters: {', '.join(conflict_details)}")
         
-        # Place the word
+        # Place the word using consistent 2D array access
         for i, letter in enumerate(word.upper()):  # Convert to uppercase
             r, c = (row, col + i) if direction == 'horizontal' else (row + i, col)
             if not self.is_occupied(r, c):
-                self.board[r * self.cols + c] = letter
+                self.board[r][c] = letter  # Use 2D array access
                 if (r, c) in self.special_tiles:
                     self.special_tiles_occupied[(r, c)] = True
                     
