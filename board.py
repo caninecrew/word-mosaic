@@ -15,6 +15,16 @@ class Board:
 
         # Initialize Scoring with special tiles and letter scores
         self.scoring = Scoring(special_tiles, LetterBank.LETTER_VALUES)
+        
+        # Initialize Word Validator
+        try:
+            self.word_validator = WordValidator()
+        except:
+            print("Warning: Unable to initialize WordValidator. Word validation disabled.")
+            self.word_validator = None
+            
+        # Define center position
+        self.center = (rows // 2, cols // 2)
 
     def calculate_turn_score(self, words):
         """
@@ -28,7 +38,19 @@ class Board:
         Returns:
             int: The total score for the turn.
         """
-        return self.scoring.calculate_turn_score(words)
+        # Get all occupied positions on the board before counting new word positions
+        existing_positions = self.get_occupied_positions()
+        
+        # Get the positions from the new words
+        current_word_positions = []
+        for _, positions in words:
+            current_word_positions.extend(positions)
+            
+        # Remove current word positions from existing positions to find only previously placed letters
+        previous_positions = [pos for pos in existing_positions if pos not in current_word_positions]
+        
+        # Calculate score with connection bonuses
+        return self.scoring.calculate_turn_score(words, previous_positions)
 
     def validate_word_positions(self, word, positions):
         """
@@ -84,13 +106,14 @@ class Board:
         Returns:
             str: A formatted string showing the current board state
         """
-        # Generate a string representation of the board for display
-        board_str = '' # Initialize an empty string
-        for i in range(self.rows): # Loop through each row
-            for j in range(self.cols): # Loop through each column
-                board_str += self.board[i * self.cols + j] + ' ' # Add the letter or space to the string
-            board_str += '\n' # Add a newline after each row
-        return board_str # Return the complete board string
+        board_str = ''
+        for row in range(self.rows):
+            for col in range(self.cols):
+                letter = self.board[row][col]
+                board_str += letter if letter else ' '
+                board_str += ' '
+            board_str += '\n'
+        return board_str
     
     def place_letter(self, letter, row, col):
         print(f"Placing letter '{letter}' at ({row}, {col})")
@@ -379,52 +402,6 @@ class Board:
         print(f"Words detected: {words}")  # Debugging statement
         return words
     
-        """
-        Retrieve all words formed during the current turn.
-
-        Returns:
-            list: A list of tuples, where each tuple contains:
-                - word (str): The word formed.
-                - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
-        """
-        words = []
-
-        # Horizontal words
-        for row in range(self.rows):
-            current_word = ""
-            positions = []
-            for col in range(self.cols):
-                letter = self.board[row][col]
-                if letter:
-                    current_word += letter
-                    positions.append((row, col))
-                else:
-                    if len(current_word) > 1:
-                        words.append((current_word, positions))
-                    current_word = ""
-                    positions = []
-            if len(current_word) > 1:
-                words.append((current_word, positions))
-
-        # Vertical words
-        for col in range(self.cols):
-            current_word = ""
-            positions = []
-            for row in range(self.rows):
-                letter = self.board[row][col]
-                if letter:
-                    current_word += letter
-                    positions.append((row, col))
-                else:
-                    if len(current_word) > 1:
-                        words.append((current_word, positions))
-                    current_word = ""
-                    positions = []
-            if len(current_word) > 1:
-                words.append((current_word, positions))
-
-        return words
-    
     def get_words_formed(self, row, col, letter):
         """
         Find all words that would be formed by placing a new letter.
@@ -663,13 +640,8 @@ class Board:
             list: A 2D list representation of the board where board_2d[row][col]
                   gives the letter at that position
         """
-        board_2d = [] # Initialize an empty 2D array
-        for r in range(self.rows): # Loop through each row
-            row = [] # Initialize an empty row
-            for c in range(self.cols): # Loop through each column
-                row.append(self.board[r * self.cols + c]) # Add each letter to the row
-            board_2d.append(row) # Add the row to the 2D array
-        return board_2d # Return the complete 2D board
+        # Since we're already using a 2D array, just return a copy
+        return [row[:] for row in self.board]
     
     def validate_word(self, word):
         """
@@ -811,6 +783,18 @@ class Board:
         board.board = data["board"]
         board.special_tiles_occupied = data["special_tiles_occupied"]
         return board
+
+    def get_letter_score(self, letter):
+        """
+        Get the score value for a letter.
+        
+        Args:
+            letter (str): The letter to get the score for
+            
+        Returns:
+            int: The point value of the letter
+        """
+        return LetterBank.LETTER_VALUES.get(letter.lower(), 0)
 
 if __name__ == "__main__":
     # Create a test board

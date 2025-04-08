@@ -5,8 +5,36 @@ class WordValidator:
     Validates words against a dictionary stored in an SQLite database.
     """
     def __init__(self, db_path="dictionary.db"):
-        self.conn = sqlite3.connect(db_path)
+        try:
+            self.conn = sqlite3.connect(db_path)
+            self.cursor = self.conn.cursor()
+            # Test if the dictionary table exists
+            self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='dictionary'")
+            if not self.cursor.fetchone():
+                print(f"Warning: Dictionary table not found in {db_path}")
+                self._create_fallback_dictionary()
+        except sqlite3.Error as e:
+            print(f"SQLite error: {e}")
+            self._create_fallback_dictionary()
+
+    def _create_fallback_dictionary(self):
+        """Create an in-memory fallback dictionary with common English words"""
+        print("Creating fallback in-memory dictionary")
+        self.conn = sqlite3.connect(":memory:")
         self.cursor = self.conn.cursor()
+        self.cursor.execute("CREATE TABLE dictionary (word TEXT PRIMARY KEY)")
+        
+        # Add some common English words as fallback
+        common_words = [
+            "the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
+            "for", "not", "on", "with", "he", "as", "you", "do", "at", "this",
+            "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
+            "an", "will", "my", "one", "all", "would", "there", "their", "what",
+            "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+            "game", "play", "word", "letter", "score", "board", "tiles", "win"
+        ]
+        self.cursor.executemany("INSERT INTO dictionary VALUES (?)", [(w,) for w in common_words])
+        self.conn.commit()
 
     def validate_word(self, word):
         """

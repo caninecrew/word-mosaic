@@ -26,7 +26,17 @@ class Scoring:
         """
         word_score = 0
         word_multiplier = 1
+        length_bonus = 1.0  # Default multiplier (no bonus)
 
+        # Apply length-based bonus multipliers
+        if len(word) >= 7:
+            length_bonus = 3.0  # 3x multiplier for 7+ letter words
+        elif len(word) == 6:
+            length_bonus = 2.0  # 2x multiplier for 6-letter words
+        elif len(word) == 5:
+            length_bonus = 1.5  # 1.5x multiplier for 5-letter words
+
+        # Calculate base score from letters and special tiles
         for i, letter in enumerate(word):
             position = positions[i]
             letter_score = self.get_letter_score(letter)
@@ -46,12 +56,17 @@ class Scoring:
 
             word_score += letter_score
 
-        # Apply word multiplier
+        # Apply word multiplier (from special tiles)
         word_score *= word_multiplier
+        
+        # Apply length bonus
+        final_score = int(word_score * length_bonus)
+        
+        print(f"Word: {word}, Base score: {word_score}, Length bonus: {length_bonus}x, Final score: {final_score}")
+        
+        return final_score
 
-        return word_score
-
-    def calculate_turn_score(self, words):
+    def calculate_turn_score(self, words, board_positions=None):
         """
         Calculate the total score for all words formed during a turn.
 
@@ -59,22 +74,45 @@ class Scoring:
             words (list): A list of tuples, where each tuple contains:
                         - word (str): The word formed.
                         - positions (list): A list of (row, col) tuples representing the positions of the letters in the word.
+            board_positions (list, optional): A list of (row, col) tuples of existing letter positions on the board.
+                                             Used to calculate connection bonuses.
 
         Returns:
             int: The total score for the turn.
         """
         turn_score = 0
+        
+        # If board_positions not provided, we can't calculate connection bonuses
+        if board_positions is None:
+            board_positions = []
+            
+        # Get positions of all letters in the words being submitted
+        current_word_positions = []
+        for _, positions in words:
+            current_word_positions.extend(positions)
+
+        # Remove current word positions from existing positions to avoid counting self-connections
+        existing_positions = [pos for pos in board_positions if pos not in current_word_positions]
 
         for word, positions in words:
             print(f"Calculating score for word: {word}, positions: {positions}")  # Debugging statement
-            # Calculate the score for each word
+            
+            # Calculate the score for the word
             word_score = self.calculate_word_score(word, positions)
+            
+            # Add connection bonus if we have existing positions to check against
+            if existing_positions:
+                connection_bonus = self.calculate_connection_bonus(positions, existing_positions)
+                word_score += connection_bonus
+                
             self.word_scores[word] = word_score  # Store the score for the word
             turn_score += word_score
 
             # Check for bingo bonus
             if self.is_bingo(word):
-                turn_score += self.bingo_bonus
+                bingo_bonus = self.bingo_bonus
+                turn_score += bingo_bonus
+                print(f"Bingo bonus: {bingo_bonus} points for using 7 letters")
 
         # Update the total score
         self.total_score += turn_score
@@ -194,3 +232,23 @@ class Scoring:
 
         # Check if all rows are the same (horizontal word) or all columns are the same (vertical word)
         return len(set(rows)) == 1 or len(set(cols)) == 1
+
+    def calculate_connection_bonus(self, positions, existing_positions):
+        """
+        Calculate bonus points for connections with existing words.
+        
+        Args:
+            positions (list): A list of (row, col) tuples for the new word.
+            existing_positions (list): A list of (row, col) tuples for existing letters on the board.
+            
+        Returns:
+            int: Bonus points for connections (2 points per connection)
+        """
+        # Find intersections between the new word and existing letters
+        intersections = set(positions).intersection(set(existing_positions))
+        connection_points = len(intersections) * 2  # 2 points per connection
+        
+        if connection_points > 0:
+            print(f"Connection bonus: {connection_points} points for {len(intersections)} intersections")
+            
+        return connection_points
