@@ -27,35 +27,33 @@ class DraggableTile(QLabel):
         super().__init__(parent)
         self.letter = letter
         self.index = index
-        self.setFixedSize(55, 55)  # Increased from 45x45 to 55x55 to match board cells
+        self.setFixedSize(60, 60)  # Increased size to provide more space
         self.setAlignment(Qt.AlignCenter)
-        self.setFrameShape(QFrame.Box)
-        self.setStyleSheet("background-color: #ffffcc; border: 1px solid #999999;")
+        self.setFrameShape(QFrame.NoFrame)  # Remove frame outline
+        self.setStyleSheet("background-color: #ffffcc;")  # Keep background color but remove border
         
         # Create a custom layout for the tile to position both the letter and point value
         self.layout = QGridLayout(self)
-        self.layout.setContentsMargins(2, 2, 2, 2)  # Slightly larger margins
+        self.layout.setContentsMargins(4, 4, 4, 4)  # Increase margins for better spacing
         self.layout.setSpacing(0)  # No spacing between items
         
-        # Create the main letter display
+        # Create the main letter display - positioned toward the center-top
         self.letter_display = QLabel(text)
-        self.letter_display.setFont(QFont('Arial', 22, QFont.Bold))  # Increased font size from 18 to 22
+        self.letter_display.setFont(QFont('Arial', 26, QFont.Bold))  # Larger font
         self.letter_display.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.letter_display, 0, 0, 1, 1, Qt.AlignCenter)
+        self.letter_display.setStyleSheet("background-color: transparent;")  # Make label background transparent
+        self.layout.addWidget(self.letter_display, 0, 0, 2, 1, Qt.AlignCenter)
         
         # Add point value in bottom-right corner (except for blank tiles)
         if letter != '0':
             # Get point value from LetterBank's LETTER_VALUES
             point_value = LetterBank.LETTER_VALUES.get(letter.lower(), 0)
             
-            # Create small label for point value
+            # Create small label for point value - position in bottom right
             self.point_label = QLabel(str(point_value))
-            self.point_label.setFont(QFont('Arial', 10))  # Increased font size from 9 to 10
-            self.point_label.setStyleSheet("color: #333333;")  # Darker text color for better visibility
-            self.point_label.setAlignment(Qt.AlignBottom | Qt.AlignRight)
-            
-            # Add the point value label to the bottom-right of the tile
-            self.layout.addWidget(self.point_label, 0, 0, 1, 1, Qt.AlignBottom | Qt.AlignRight)
+            self.point_label.setFont(QFont('Arial', 10))
+            self.point_label.setStyleSheet("color: #333333; background-color: transparent;")  # Make label background transparent
+            self.layout.addWidget(self.point_label, 1, 0, 1, 1, Qt.AlignBottom | Qt.AlignRight)
         
         # Enable mouse tracking for this widget
         self.setMouseTracking(True)
@@ -121,28 +119,28 @@ class DroppableCell(QLabel):
         super().__init__(parent)
         self.row = row
         self.col = col
-        self.setFixedSize(55, 55)  # Increased from 45x45 to 55x55 for better visibility
+        self.setFixedSize(60, 60)  # Increased to match DraggableTile size
         self.setAlignment(Qt.AlignCenter)
-        self.setFrameShape(QFrame.Box)
-        self.setStyleSheet("border: 1px solid #999999;")
+        self.setFrameShape(QFrame.NoFrame)  # Remove frame outline
+        self.setStyleSheet("background-color: transparent; border: 1px solid #cccccc;")  # Lighter border
         
         # Create a layout for the cell to accommodate both letter and point value
         self.layout = QGridLayout(self)
-        self.layout.setContentsMargins(2, 2, 2, 2)
-        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(4, 4, 4, 4)  # Increase margins for better spacing
+        self.layout.setSpacing(0)  # No spacing between items
         
-        # Create label for the letter display (main content)
+        # Create label for the letter display (main content) - positioned toward the center-top
         self.letter_display = QLabel("")
-        self.letter_display.setFont(QFont('Arial', 22, QFont.Bold))  # Increased font size
+        self.letter_display.setFont(QFont('Arial', 26, QFont.Bold))  # Match DraggableTile font size
         self.letter_display.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.letter_display, 0, 0, 1, 1, Qt.AlignCenter)
+        self.letter_display.setStyleSheet("background-color: transparent;")  # Make label background transparent
+        self.layout.addWidget(self.letter_display, 0, 0, 2, 1, Qt.AlignCenter)
         
-        # Create label for the point value
+        # Create label for the point value - position in bottom right
         self.point_label = QLabel("")
-        self.point_label.setFont(QFont('Arial', 9))
-        self.point_label.setStyleSheet("color: #333333;")
-        self.point_label.setAlignment(Qt.AlignBottom | Qt.AlignRight)
-        self.layout.addWidget(self.point_label, 0, 0, 1, 1, Qt.AlignBottom | Qt.AlignRight)
+        self.point_label.setFont(QFont('Arial', 10))
+        self.point_label.setStyleSheet("color: #333333; background-color: transparent;")  # Make label background transparent
+        self.layout.addWidget(self.point_label, 1, 0, 1, 1, Qt.AlignBottom | Qt.AlignRight)
         
         # Store original state attributes
         self.original_style = None
@@ -359,31 +357,29 @@ class WordMosaicApp(QMainWindow):
         for row in range(15):
             for col in range(15):
                 cell = DroppableCell(row, col, board_widget)
-                # Note: cell size is now defined in DroppableCell class (55x55)
-                cell.setAlignment(Qt.AlignCenter)
-                cell.setFrameShape(QFrame.Box)  # Add border
-
+                # Note: cell size is now defined in DroppableCell class (60x60)
+                
                 # Highlight special tiles
                 special_tile = self.game_board.get_special_tile_multiplier(row, col)
                 if special_tile == 'TW':
-                    cell.setStyleSheet("background-color: #ff9999; border: 1px solid #999999;")  # Triple Word
+                    cell.setStyleSheet("background-color: #ff9999; border: 1px solid #dddddd;")  # Triple Word
                     cell.setText("TW")
-                    cell.setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))  # Use letter_display instead of setFont
                 elif special_tile == 'DW':
-                    cell.setStyleSheet("background-color: #ffcc99; border: 1px solid #999999;")  # Double Word
+                    cell.setStyleSheet("background-color: #ffcc99; border: 1px solid #dddddd;")  # Double Word
                     cell.setText("DW")
-                    cell.setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif special_tile == 'TL':
-                    cell.setStyleSheet("background-color: #9999ff; border: 1px solid #999999;")  # Triple Letter
+                    cell.setStyleSheet("background-color: #9999ff; border: 1px solid #dddddd;")  # Triple Letter
                     cell.setText("TL")
-                    cell.setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif special_tile == 'DL':
-                    cell.setStyleSheet("background-color: #99ccff; border: 1px solid #999999;")  # Double Letter
+                    cell.setStyleSheet("background-color: #99ccff; border: 1px solid #dddddd;")  # Double Letter
                     cell.setText("DL")
-                    cell.setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif row == 7 and col == 7:
-                    cell.setStyleSheet("background-color: #ffcccc; border: 1px solid #999999;")  # Center tile
-                    cell.setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                    cell.setStyleSheet("background-color: #ffcccc; border: 1px solid #dddddd;")  # Center tile
+                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
 
                 # Store cell reference and add to layout
                 self.cells[(row, col)] = cell
@@ -479,10 +475,11 @@ class WordMosaicApp(QMainWindow):
             for col in range(15):
                 letter = self.game_board.get_letter(row, col)
                 if letter:
-                    # Display the letter if present, using letter bank color and consistent font
+                    # Display the letter if present with letter bank color
                     self.cells[(row, col)].setText(letter.upper())
-                    self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold; border: 1px solid #999999;")
-                    self.cells[(row, col)].setFont(QFont('Arial', 18, QFont.Bold))  # Larger font for better visibility
+                    self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; border: 1px solid #cccccc;")
+                    self.cells[(row, col)].letter_display.setFont(QFont('Arial', 26, QFont.Bold))  # Match DraggableTile font size
+                    
                     # Set point value for the letter
                     point_value = LetterBank.LETTER_VALUES.get(letter.lower(), 0)
                     self.cells[(row, col)].setPointValue(point_value)
@@ -491,29 +488,34 @@ class WordMosaicApp(QMainWindow):
                     special_tile = self.game_board.get_special_tile_multiplier(row, col)
                     if special_tile == 'TW':
                         self.cells[(row, col)].setText("TW")
-                        self.cells[(row, col)].setStyleSheet("background-color: #ff9999; border: 1px solid #999999;")  # Triple Word
-                        self.cells[(row, col)].setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                        self.cells[(row, col)].setStyleSheet("background-color: #ff9999; border: 1px solid #dddddd;")
+                        self.cells[(row, col)].letter_display.setFont(QFont('Arial', 12, QFont.Bold))
+                        self.cells[(row, col)].setPointValue(None)
                     elif special_tile == 'DW':
                         self.cells[(row, col)].setText("DW")
-                        self.cells[(row, col)].setStyleSheet("background-color: #ffcc99; border: 1px solid #999999;")  # Double Word
-                        self.cells[(row, col)].setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                        self.cells[(row, col)].setStyleSheet("background-color: #ffcc99; border: 1px solid #dddddd;")
+                        self.cells[(row, col)].letter_display.setFont(QFont('Arial', 12, QFont.Bold))
+                        self.cells[(row, col)].setPointValue(None)
                     elif special_tile == 'TL':
                         self.cells[(row, col)].setText("TL")
-                        self.cells[(row, col)].setStyleSheet("background-color: #9999ff; border: 1px solid #999999;")  # Triple Letter
-                        self.cells[(row, col)].setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                        self.cells[(row, col)].setStyleSheet("background-color: #9999ff; border: 1px solid #dddddd;")
+                        self.cells[(row, col)].letter_display.setFont(QFont('Arial', 12, QFont.Bold))
+                        self.cells[(row, col)].setPointValue(None)
                     elif special_tile == 'DL':
                         self.cells[(row, col)].setText("DL")
-                        self.cells[(row, col)].setStyleSheet("background-color: #99ccff; border: 1px solid #999999;")  # Double Letter
-                        self.cells[(row, col)].setFont(QFont('Arial', 12, QFont.Bold))  # Increased font size
+                        self.cells[(row, col)].setStyleSheet("background-color: #99ccff; border: 1px solid #dddddd;")
+                        self.cells[(row, col)].letter_display.setFont(QFont('Arial', 12, QFont.Bold))
+                        self.cells[(row, col)].setPointValue(None)
                     elif row == 7 and col == 7:
                         self.cells[(row, col)].setText("")
-                        self.cells[(row, col)].setStyleSheet("background-color: #ffcccc; border: 1px solid #999999;")  # Center tile
-                        self.cells[(row, col)].setFont(QFont('Arial', 12, QFont.Bold))
+                        self.cells[(row, col)].setStyleSheet("background-color: #ffcccc; border: 1px solid #dddddd;")
+                        self.cells[(row, col)].letter_display.setFont(QFont('Arial', 12, QFont.Bold))
+                        self.cells[(row, col)].setPointValue(None)
                     else:
                         # Clear the cell if it's not a special tile
                         self.cells[(row, col)].setText("")
-                        self.cells[(row, col)].setStyleSheet("border: 1px solid #999999;")  # Consistent border styling
-                        self.cells[(row, col)].setFont(QFont('Arial', 12))  # Default font
+                        self.cells[(row, col)].setStyleSheet("background-color: transparent; border: 1px solid #dddddd;")
+                        self.cells[(row, col)].letter_display.setFont(QFont('Arial', 12))
                         self.cells[(row, col)].setPointValue(None)
     
     def select_letter(self, letter, index):
@@ -558,8 +560,9 @@ class WordMosaicApp(QMainWindow):
 
             # Update the visual board with the letter, using consistent styling
             self.cells[(row, col)].setText(self.selected_letter.upper())
-            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
-            self.cells[(row, col)].setFont(QFont('Arial', 14, QFont.Bold))  # Consistent font for all placed letters
+            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc;")
+            self.cells[(row, col)].letter_display.setFont(QFont('Arial', 26, QFont.Bold))  # Match DraggableTile font size
+            
             # Set point value for the letter
             point_value = LetterBank.LETTER_VALUES.get(self.selected_letter.lower(), 0)
             self.cells[(row, col)].setPointValue(point_value)
@@ -621,8 +624,9 @@ class WordMosaicApp(QMainWindow):
 
             # Update the visual board with the letter, using consistent styling
             self.cells[(row, col)].setText(letter.upper())
-            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
-            self.cells[(row, col)].setFont(QFont('Arial', 14, QFont.Bold))
+            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc;")
+            self.cells[(row, col)].letter_display.setFont(QFont('Arial', 26, QFont.Bold))  # Match DraggableTile font size
+            
             # Set point value for the letter
             point_value = LetterBank.LETTER_VALUES.get(letter.lower(), 0)
             self.cells[(row, col)].setPointValue(point_value)
