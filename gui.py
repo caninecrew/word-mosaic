@@ -39,8 +39,10 @@ class DraggableTile(QLabel):
     def mousePressEvent(self, event):
         """Handle mouse press events for tile selection and initiating drag."""
         if event.button() == Qt.LeftButton:
-            # If just clicked (not dragged), emit a signal or call a method
-            self.parent().select_letter(self.letter, self.index)
+            # If just clicked (not dragged), access the main window to call select_letter
+            main_window = self.window()
+            if hasattr(main_window, 'select_letter'):
+                main_window.select_letter(self.letter, self.index)
             
             # Store the position for potential drag
             self.drag_start_position = event.pos()
