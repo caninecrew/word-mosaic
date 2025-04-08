@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QGridLayout, QLabel, QFrame, QHBoxLayout, QStatusBar, QPushButton)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QInputDialog
 
 class WordMosaicApp(QMainWindow):
     def __init__(self):
@@ -260,10 +261,21 @@ class WordMosaicApp(QMainWindow):
         Handle letter selection from the letter bank.
         Highlights the selected letter and updates the status bar.
         """
-        self.selected_letter = letter
+        if letter == '0':  # Blank tile
+            # Prompt the user to choose a letter for the blank tile
+            chosen_letter, ok = QInputDialog.getText(self, "Choose Letter", "Enter a letter for the blank tile:")
+            if ok and chosen_letter.isalpha() and len(chosen_letter) == 1:
+                self.selected_letter = chosen_letter.lower()  # Store the chosen letter
+                self.status_bar.showMessage(f"Selected blank tile as: {chosen_letter.upper()}")
+            else:
+                self.status_bar.showMessage("Invalid input. Please select a valid letter.")
+                return
+        else:
+            self.selected_letter = letter
+
         self.selected_index = index
-        self.status_bar.showMessage(f"Selected letter: {letter.upper()}")
-        
+        self.status_bar.showMessage(f"Selected letter: {self.selected_letter.upper()}")
+
         # Highlight only the specific clicked tile
         for i, tile in enumerate(self.letter_tiles):
             if i == index:
