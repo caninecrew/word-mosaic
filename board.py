@@ -25,6 +25,14 @@ class Board:
             
         # Define center position
         self.center = (rows // 2, cols // 2)
+        
+    @property
+    def size(self):
+        """
+        Returns the board size (assuming it's a square board).
+        For compatibility with the GUI which expects a size attribute.
+        """
+        return self.rows  # Assuming rows == cols for a square board
 
     def calculate_turn_score(self, words):
         """

@@ -153,6 +153,14 @@ class LetterBank:
         """Get the count of a letter in the letter bank."""
         return self.letter_bank.get(letter, 0)
     
+    def get_letter_counts(self):
+        """Get all letter counts in the letter bank.
+        
+        Returns:
+            dict: A dictionary mapping letters to their counts in the bank
+        """
+        return self.letter_bank.copy()
+    
     def get_letter_frequencies(self):
         """Get the frequencies of letters in the letter bank."""
         return self.LETTER_FREQUENCIES.copy()

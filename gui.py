@@ -1,14 +1,18 @@
-import tkinter as tk
-from tkinter import messagebox, simpledialog
-import tkinter.ttk as ttk
+from PyQt5.QtWidgets import (
+    QMainWindow, QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, 
+    QHBoxLayout, QGridLayout, QFrame, QLineEdit, QMessageBox, QAction, 
+    QMenu, QMenuBar, QStatusBar, QRadioButton
+)
+from PyQt5.QtGui import QFont, QIcon, QKeySequence
+from PyQt5.QtCore import Qt, QSize
 from board import Board
 from letter_bank import LetterBank
 from scoring import Scoring
 from merriam_webster_api import COLLEGIATE, LEARNERS
 
-class GUI:
+class WordMosaicApp(QMainWindow):
     """
-    Graphical User Interface for Word Mosaic game
+    Graphical User Interface for Word Mosaic game using PyQt5
     """
     def __init__(self, game):
         """
@@ -17,17 +21,21 @@ class GUI:
         Args:
             game: Game object containing the game logic
         """
+        super().__init__()
         self.game = game
-        self.root = tk.Tk()
-        self.root.title("Word Mosaic")
-        self.root.configure(bg="#f5f5f5")
+        
+        # Set window properties
+        self.setWindowTitle("Word Mosaic")
+        self.setGeometry(100, 100, 800, 600)
+        self.setStyleSheet("background-color: #f5f5f5;")
         
         # Dictionary setting
-        self.selected_dictionary = tk.StringVar(value=game.word_validator.dictionary_type)
+        self.selected_dictionary = self.game.word_validator.dictionary_type
         
-        # Main frame
-        self.main_frame = tk.Frame(self.root, bg="#f5f5f5")
-        self.main_frame.pack(padx=20, pady=20)
+        # Create main widget and layout
+        self.main_widget = QWidget()
+        self.setCentralWidget(self.main_widget)
+        self.main_layout = QVBoxLayout(self.main_widget)
         
         # Create UI elements
         self._create_menu()
@@ -38,153 +46,178 @@ class GUI:
         self._create_status_frame()
         
         # Initialize letters for a new game
-        self.update_letter_bank_display()
         self.update_board_display()
+        self.update_letter_bank_display()
         self.update_score_display()
-        
-        # Bind keyboard shortcuts
-        self._bind_shortcuts()
-        
+    
     def _create_menu(self):
         """Create the menu bar with game options."""
-        menubar = tk.Menu(self.root)
-        self.root.config(menu=menubar)
+        # Create menubar
+        menubar = self.menuBar()
         
         # Game menu
-        game_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Game", menu=game_menu)
-        game_menu.add_command(label="New Game", command=self.new_game)
-        game_menu.add_command(label="Show High Scores", command=self.show_high_scores)
-        game_menu.add_separator()
-        game_menu.add_command(label="Exit", command=self.root.quit)
+        game_menu = menubar.addMenu('&Game')
+        
+        new_game_action = QAction('&New Game', self)
+        new_game_action.setShortcut(QKeySequence("Ctrl+N"))
+        new_game_action.triggered.connect(self.new_game)
+        game_menu.addAction(new_game_action)
+        
+        high_scores_action = QAction('&High Scores', self)
+        high_scores_action.triggered.connect(self.show_high_scores)
+        game_menu.addAction(high_scores_action)
+        
+        game_menu.addSeparator()
+        
+        exit_action = QAction('E&xit', self)
+        exit_action.setShortcut(QKeySequence("Alt+F4"))
+        exit_action.triggered.connect(self.close)
+        game_menu.addAction(exit_action)
         
         # Options menu
-        options_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Options", menu=options_menu)
+        options_menu = menubar.addMenu('&Options')
         
         # Dictionary submenu
-        dictionary_menu = tk.Menu(options_menu, tearoff=0)
-        options_menu.add_cascade(label="Dictionary", menu=dictionary_menu)
-        dictionary_menu.add_radiobutton(label="Collegiate Dictionary", 
-                                       variable=self.selected_dictionary, 
-                                       value=COLLEGIATE,
-                                       command=self.change_dictionary)
-        dictionary_menu.add_radiobutton(label="Learner's Dictionary", 
-                                       variable=self.selected_dictionary, 
-                                       value=LEARNERS,
-                                       command=self.change_dictionary)
+        dictionary_menu = QMenu('&Dictionary', self)
+        options_menu.addMenu(dictionary_menu)
+        
+        collegiate_action = QAction('&Collegiate Dictionary', self)
+        collegiate_action.setCheckable(True)
+        collegiate_action.setChecked(self.selected_dictionary == COLLEGIATE)
+        collegiate_action.triggered.connect(lambda: self.change_dictionary(COLLEGIATE))
+        dictionary_menu.addAction(collegiate_action)
+        
+        learners_action = QAction("&Learner's Dictionary", self)
+        learners_action.setCheckable(True)
+        learners_action.setChecked(self.selected_dictionary == LEARNERS)
+        learners_action.triggered.connect(lambda: self.change_dictionary(LEARNERS))
+        dictionary_menu.addAction(learners_action)
+        
+        self.dictionary_actions = [collegiate_action, learners_action]
         
         # Help menu
-        help_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="Rules", command=self.show_rules)
-        help_menu.add_command(label="About", command=self.show_about)
-        help_menu.add_command(label="Dictionary Status", command=self.show_dictionary_status)
+        help_menu = menubar.addMenu('&Help')
+        
+        rules_action = QAction('&Rules', self)
+        rules_action.setShortcut(QKeySequence("F1"))
+        rules_action.triggered.connect(self.show_rules)
+        help_menu.addAction(rules_action)
+        
+        about_action = QAction('&About', self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+        
+        dict_status_action = QAction('&Dictionary Status', self)
+        dict_status_action.triggered.connect(self.show_dictionary_status)
+        help_menu.addAction(dict_status_action)
     
     def _create_top_frame(self):
         """Create the top frame with game info."""
-        top_frame = tk.Frame(self.main_frame, bg="#f5f5f5")
-        top_frame.pack(fill=tk.X, pady=(0, 10))
+        top_frame = QWidget()
+        top_layout = QHBoxLayout(top_frame)
+        top_layout.setContentsMargins(0, 0, 0, 10)
         
         # Score display
-        self.score_label = tk.Label(top_frame, text="Score: 0", font=("Helvetica", 16), bg="#f5f5f5")
-        self.score_label.pack(side=tk.LEFT)
+        self.score_label = QLabel("Score: 0")
+        self.score_label.setFont(QFont("Arial", 16))
+        top_layout.addWidget(self.score_label, 1, Qt.AlignLeft)
         
         # Dictionary indicator
-        self.dictionary_label = tk.Label(
-            top_frame, 
-            text=f"Dictionary: {self.game.word_validator.dictionary_name}", 
-            font=("Helvetica", 12), 
-            bg="#f5f5f5"
-        )
-        self.dictionary_label.pack(side=tk.RIGHT)
+        self.dictionary_label = QLabel(f"Dictionary: {self.game.word_validator.dictionary_name}")
+        self.dictionary_label.setFont(QFont("Arial", 12))
+        top_layout.addWidget(self.dictionary_label, 0, Qt.AlignRight)
+        
+        self.main_layout.addWidget(top_frame)
     
     def _create_board_frame(self):
         """Create the frame that displays the game board."""
-        board_frame = tk.Frame(self.main_frame, bg="#e0e0e0", bd=2, relief=tk.RIDGE)
-        board_frame.pack(pady=10)
+        board_frame = QFrame()
+        board_frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
+        board_frame.setStyleSheet("background-color: #e0e0e0;")
+        
+        board_layout = QGridLayout(board_frame)
+        board_layout.setSpacing(2)
         
         # Create grid of cells for the board
         self.board_cells = []
         for row in range(self.game.board.size):
             cell_row = []
             for col in range(self.game.board.size):
-                cell = tk.Label(
-                    board_frame,
-                    width=3,
-                    height=1,
-                    font=("Helvetica", 16, "bold"),
-                    bg="#ffffff",
-                    bd=2,
-                    relief=tk.GROOVE
+                cell = QLabel()
+                cell.setFixedSize(40, 40)
+                cell.setAlignment(Qt.AlignCenter)
+                cell.setFont(QFont("Arial", 16, QFont.Bold))
+                cell.setStyleSheet(
+                    "background-color: #ffffff; border: 2px solid #c0c0c0; border-radius: 4px;"
                 )
-                cell.grid(row=row, column=col, padx=2, pady=2)
+                board_layout.addWidget(cell, row, col)
                 cell_row.append(cell)
             self.board_cells.append(cell_row)
+            
+        self.main_layout.addWidget(board_frame)
     
     def _create_letter_bank_frame(self):
         """Create the frame that displays available letters."""
-        letter_bank_frame = tk.Frame(self.main_frame, bg="#f5f5f5")
-        letter_bank_frame.pack(pady=10)
+        letter_bank_widget = QWidget()
+        letter_bank_layout = QVBoxLayout(letter_bank_widget)
+        letter_bank_layout.setContentsMargins(0, 10, 0, 10)
         
-        tk.Label(letter_bank_frame, text="Available Letters:", font=("Helvetica", 12), bg="#f5f5f5").pack(anchor=tk.W)
+        # Label
+        label = QLabel("Available Letters:")
+        label.setFont(QFont("Arial", 12))
+        letter_bank_layout.addWidget(label)
         
-        self.letter_bank_display = tk.Frame(letter_bank_frame, bg="#f0f0f0", bd=2, relief=tk.SUNKEN)
-        self.letter_bank_display.pack(fill=tk.X, expand=True)
+        # Letter bank display frame
+        self.letter_bank_frame = QFrame()
+        self.letter_bank_frame.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.letter_bank_frame.setStyleSheet("background-color: #f0f0f0;")
         
-        # Letter tiles will be created in update_letter_bank_display
+        # Will use flow layout for tiles - we'll create a layout in the update method
+        self.letter_bank_layout = QHBoxLayout(self.letter_bank_frame)
+        
+        letter_bank_layout.addWidget(self.letter_bank_frame)
+        self.main_layout.addWidget(letter_bank_widget)
     
     def _create_word_entry_frame(self):
         """Create the frame for entering words."""
-        word_entry_frame = tk.Frame(self.main_frame, bg="#f5f5f5")
-        word_entry_frame.pack(pady=10, fill=tk.X)
+        word_entry_widget = QWidget()
+        word_entry_layout = QHBoxLayout(word_entry_widget)
+        word_entry_layout.setContentsMargins(0, 10, 0, 10)
         
-        tk.Label(word_entry_frame, text="Enter Word:", font=("Helvetica", 12), bg="#f5f5f5").pack(side=tk.LEFT)
+        # Label
+        label = QLabel("Enter Word:")
+        label.setFont(QFont("Arial", 12))
+        word_entry_layout.addWidget(label)
         
-        self.word_entry = tk.Entry(word_entry_frame, font=("Helvetica", 14))
-        self.word_entry.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
-        self.word_entry.focus_set()
+        # Text field
+        self.word_entry = QLineEdit()
+        self.word_entry.setFont(QFont("Arial", 14))
+        self.word_entry.returnPressed.connect(self.submit_word)
+        word_entry_layout.addWidget(self.word_entry)
         
-        submit_button = tk.Button(
-            word_entry_frame,
-            text="Submit",
-            command=self.submit_word,
-            bg="#4caf50",
-            fg="white",
-            font=("Helvetica", 10, "bold")
-        )
-        submit_button.pack(side=tk.LEFT, padx=5)
+        # Submit button
+        submit_button = QPushButton("Submit")
+        submit_button.setStyleSheet("background-color: #4caf50; color: white; font-weight: bold; padding: 5px 10px;")
+        submit_button.clicked.connect(self.submit_word)
+        word_entry_layout.addWidget(submit_button)
         
-        # Bind Enter key to submit
-        self.word_entry.bind("<Return>", lambda event: self.submit_word())
+        self.main_layout.addWidget(word_entry_widget)
     
     def _create_status_frame(self):
         """Create the status bar at the bottom."""
-        status_frame = tk.Frame(self.main_frame, bg="#f5f5f5")
-        status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(10, 0))
-        
-        self.status_label = tk.Label(
-            status_frame,
-            text="Welcome to Word Mosaic!",
-            font=("Helvetica", 10),
-            bd=1,
-            relief=tk.SUNKEN,
-            anchor=tk.W
-        )
-        self.status_label.pack(fill=tk.X)
+        self.statusBar = QStatusBar()
+        self.statusBar.setFont(QFont("Arial", 10))
+        self.statusBar.showMessage("Welcome to Word Mosaic!")
+        self.setStatusBar(self.statusBar)
     
-    def _bind_shortcuts(self):
-        """Bind keyboard shortcuts."""
-        self.root.bind("<Control-n>", lambda event: self.new_game())
-        self.root.bind("<F1>", lambda event: self.show_rules())
-    
-    def start(self):
-        """Start the GUI main loop."""
-        self.root.mainloop()
+    def show(self):
+        """Override show method to focus on word entry field"""
+        super().show()
+        self.word_entry.setFocus()
     
     def submit_word(self):
         """Handle submission of a word."""
-        word = self.word_entry.get().strip().upper()
+        word = self.word_entry.text().strip().upper()
         
         if not word:
             return
@@ -196,7 +229,7 @@ class GUI:
             self.update_board_display()
             self.update_letter_bank_display()
             self.update_score_display()
-            self.word_entry.delete(0, tk.END)
+            self.word_entry.clear()
             
             # Show definition if available
             definition = self.game.get_word_definition(word.lower())
@@ -215,40 +248,51 @@ class GUI:
                 cell = self.board_cells[row][col]
                 
                 if letter:
-                    cell.config(text=letter, bg="#ffeb3b")  # Yellow for placed letters
+                    cell.setText(letter)
+                    cell.setStyleSheet("background-color: #ffeb3b; border: 2px solid #c0c0c0; border-radius: 4px;")
                 else:
-                    cell.config(text="", bg="#ffffff")  # White for empty cells
+                    cell.setText("")
+                    cell.setStyleSheet("background-color: #ffffff; border: 2px solid #c0c0c0; border-radius: 4px;")
     
     def update_letter_bank_display(self):
         """Update the letter bank display to show available letters."""
         # Clear existing letters
-        for widget in self.letter_bank_display.winfo_children():
-            widget.destroy()
+        while self.letter_bank_layout.count():
+            item = self.letter_bank_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
         
         # Create new letter tiles
         for letter, count in sorted(self.game.letter_bank.get_letter_counts().items()):
             if count > 0:
                 for _ in range(count):
-                    tile = tk.Label(
-                        self.letter_bank_display,
-                        text=letter,
-                        font=("Helvetica", 14, "bold"),
-                        width=2,
-                        height=1,
-                        bg="#2196f3",  # Blue for available letters
-                        fg="white",
-                        bd=1,
-                        relief=tk.RAISED
+                    tile = QLabel(letter)
+                    tile.setFixedSize(30, 30)
+                    tile.setAlignment(Qt.AlignCenter)
+                    tile.setFont(QFont("Arial", 14, QFont.Bold))
+                    tile.setStyleSheet(
+                        "background-color: #2196f3; color: white; border: 1px solid #0b7dda; border-radius: 4px;"
                     )
-                    tile.pack(side=tk.LEFT, padx=2, pady=2)
+                    self.letter_bank_layout.addWidget(tile)
+        
+        # Add a stretchable space at the end
+        self.letter_bank_layout.addStretch(1)
     
     def update_score_display(self):
         """Update the score display."""
-        self.score_label.config(text=f"Score: {self.game.score}")
+        self.score_label.setText(f"Score: {self.game.score}")
     
     def new_game(self):
         """Start a new game."""
-        if messagebox.askyesno("New Game", "Start a new game?"):
+        reply = QMessageBox.question(
+            self, 'New Game', 
+            "Start a new game?", 
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
             self.game.new_game()
             self.update_board_display()
             self.update_letter_bank_display()
@@ -258,7 +302,7 @@ class GUI:
     def show_high_scores(self):
         """Show the high scores dialog."""
         # Placeholder - implement high scores later
-        messagebox.showinfo("High Scores", "Feature coming soon!")
+        QMessageBox.information(self, "High Scores", "Feature coming soon!")
     
     def show_rules(self):
         """Show the game rules dialog."""
@@ -275,7 +319,7 @@ class GUI:
         
         Good luck!
         """
-        messagebox.showinfo("Game Rules", rules)
+        QMessageBox.information(self, "Game Rules", rules)
     
     def show_about(self):
         """Show the about dialog."""
@@ -286,15 +330,15 @@ class GUI:
         
         Created with ♥
         """
-        messagebox.showinfo("About", about_text)
+        QMessageBox.information(self, "About", about_text)
     
     def show_status(self, message):
         """Update the status bar with a message."""
-        self.status_label.config(text=message)
+        self.statusBar.showMessage(message)
     
     def show_definition(self, word, definition):
         """Show a popup with the word's definition."""
-        messagebox.showinfo(f"Definition of {word}", definition)
+        QMessageBox.information(self, f"Definition of {word}", definition)
     
     def show_dictionary_status(self):
         """Show information about the current dictionary."""
@@ -306,12 +350,25 @@ class GUI:
         
         You can change dictionaries in Options > Dictionary menu.
         """
-        messagebox.showinfo("Dictionary Status", status_text)
+        QMessageBox.information(self, "Dictionary Status", status_text)
     
-    def change_dictionary(self):
+    def change_dictionary(self, dict_type):
         """Change the dictionary being used."""
-        new_dict_type = self.selected_dictionary.get()
-        info = self.game.word_validator.switch_dictionary(new_dict_type)
+        self.selected_dictionary = dict_type
+        info = self.game.word_validator.switch_dictionary(dict_type)
         
-        self.dictionary_label.config(text=f"Dictionary: {info['name']}")
+        # Update checked state of menu items
+        for action in self.dictionary_actions:
+            if action.text() == '&Collegiate Dictionary' and dict_type == COLLEGIATE:
+                action.setChecked(True)
+            elif action.text() == "&Learner's Dictionary" and dict_type == LEARNERS:
+                action.setChecked(True)
+            else:
+                action.setChecked(False)
+        
+        # Update dictionary label and status
+        self.dictionary_label.setText(f"Dictionary: {info['name']}")
         self.show_status(f"Switched to {info['name']}")
+
+# Keep the legacy class name as an alias for backward compatibility
+GUI = WordMosaicApp
