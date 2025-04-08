@@ -233,28 +233,34 @@ class WordMosaicApp(QMainWindow):
             for col in range(15):
                 letter = self.game_board.get_letter(row, col)
                 if letter:
-                    # Display the letter if present, using letter bank color
+                    # Display the letter if present, using letter bank color and consistent font
                     self.cells[(row, col)].setText(letter.upper())
                     self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
+                    self.cells[(row, col)].setFont(QFont('Arial', 14, QFont.Bold))  # Consistent font for all placed letters
                 else:
                     # Check if the cell is a special tile
                     special_tile = self.game_board.get_special_tile_multiplier(row, col)
                     if special_tile == 'TW':
                         self.cells[(row, col)].setText("TW")
                         self.cells[(row, col)].setStyleSheet("background-color: #ff9999;")  # Triple Word
+                        self.cells[(row, col)].setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                     elif special_tile == 'DW':
                         self.cells[(row, col)].setText("DW")
                         self.cells[(row, col)].setStyleSheet("background-color: #ffcc99;")  # Double Word
+                        self.cells[(row, col)].setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                     elif special_tile == 'TL':
                         self.cells[(row, col)].setText("TL")
                         self.cells[(row, col)].setStyleSheet("background-color: #9999ff;")  # Triple Letter
+                        self.cells[(row, col)].setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                     elif special_tile == 'DL':
                         self.cells[(row, col)].setText("DL")
                         self.cells[(row, col)].setStyleSheet("background-color: #99ccff;")  # Double Letter
+                        self.cells[(row, col)].setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for special tiles
                     else:
                         # Clear the cell if it's not a special tile
                         self.cells[(row, col)].setText("")
                         self.cells[(row, col)].setStyleSheet("")  # Reset to default background
+                        self.cells[(row, col)].setFont(QFont('Arial', 10))  # Reset font for empty cells
     
     def select_letter(self, letter, index):
         """
@@ -296,9 +302,10 @@ class WordMosaicApp(QMainWindow):
             # Try to place the letter using your game logic
             self.game_board.place_letter(self.selected_letter, row, col)
 
-            # Update the visual board with the letter and same color as inventory
+            # Update the visual board with the letter, using consistent styling
             self.cells[(row, col)].setText(self.selected_letter.upper())
             self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
+            self.cells[(row, col)].setFont(QFont('Arial', 14, QFont.Bold))  # Consistent font for all placed letters
 
             # Mark special tile as occupied if applicable
             if (row, col) in self.game_board.special_tiles:
