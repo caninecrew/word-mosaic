@@ -677,6 +677,10 @@ class WordMosaicApp(QMainWindow):
             words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
             print(f"Words formed: {words_formed}")  # Debugging statement
 
+            if not words_formed:
+                self.status_bar.showMessage("No valid words formed")
+                return
+
             # Validate word positions
             for word_data in words_formed:
                 word, positions = word_data
@@ -707,11 +711,17 @@ class WordMosaicApp(QMainWindow):
             self.score_value.setText(str(self.score))
             print(f"Score display updated to: {self.score_value.text()}")
 
-            # Get definitions for the words
+            # Clear previous definitions
+            self.definitions_content.clear()
+            
+            # Get definitions for the words in this turn only
             from dictionary_api import format_definitions
             word_list = [word for word, _ in words_formed]
             formatted_definitions = format_definitions(word_list)
-            self.definitions_content.setText(formatted_definitions)
+            
+            # Set new definitions with header indicating these are from the current turn
+            current_turn_text = f"<p><b>Current Turn Words:</b></p>{formatted_definitions}"
+            self.definitions_content.setText(current_turn_text)
             self.definitions_content.setTextFormat(Qt.RichText)
 
             # Replenish player's hand
