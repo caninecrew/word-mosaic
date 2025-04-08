@@ -6,3 +6,5 @@ __pycache__/
 # databases
 *.sqlite3
 *.db
+
+*.env
