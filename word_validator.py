@@ -1,10 +1,16 @@
 import sqlite3
+from merriam_webster_api import MerriamWebsterAPI
 
 class WordValidator:
     """
-    Validates words against a dictionary stored in an SQLite database.
+    Validates words against a dictionary using the Merriam-Webster API.
+    Falls back to SQLite database if the API is unavailable.
     """
     def __init__(self, db_path="dictionary.db"):
+        # Initialize the Merriam-Webster API client
+        self.mw_api = MerriamWebsterAPI()
+        
+        # Also maintain the SQLite connection as fallback
         try:
             self.conn = sqlite3.connect(db_path)
             self.cursor = self.conn.cursor()
@@ -38,7 +44,8 @@ class WordValidator:
 
     def validate_word(self, word):
         """
-        Check if a word is valid.
+        Check if a word is valid using the Merriam-Webster API.
+        Falls back to the SQLite database if the API is unavailable.
 
         Args:
             word (str): The word to validate
@@ -46,8 +53,14 @@ class WordValidator:
         Returns:
             bool: True if the word is valid, False otherwise
         """
-        self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
-        return self.cursor.fetchone() is not None
+        # First try to validate with the Merriam-Webster API
+        try:
+            return self.mw_api.validate_word(word)
+        except Exception as e:
+            print(f"Merriam-Webster API error, falling back to database: {e}")
+            # Fall back to SQLite database if the API fails
+            self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
+            return self.cursor.fetchone() is not None
 
     def validate_words(self, words):
         """
@@ -79,6 +92,19 @@ class WordValidator:
         all_words = [row[0] for row in self.cursor.fetchall()]
 
         return get_close_matches(word.lower(), all_words, n=max_suggestions)
+
+    def get_definition(self, word):
+        """
+        Get the definition of a word.
+        
+        Args:
+            word (str): The word to define
+            
+        Returns:
+            str: The definition of the word, or None if not found
+        """
+        # Try to get definition from Merriam-Webster API
+        return self.mw_api.get_definition(word)
 
     def dictionary_size(self):
         """

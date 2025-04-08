@@ -8,13 +8,16 @@ import json
 from urllib.parse import quote_plus
 import sqlite3
 import os
+from merriam_webster_api import MerriamWebsterAPI
 
 # Dictionary of cached definitions to avoid repeated API calls
 cached_definitions = {}
+# Initialize the Merriam-Webster API client
+mw_api = MerriamWebsterAPI()
 
 def fetch_definition(word):
     """
-    Fetch definition for a word from a dictionary API or local cache
+    Fetch definition for a word from the Merriam-Webster API or local cache
     
     Args:
         word (str): The word to look up
@@ -35,8 +38,17 @@ def fetch_definition(word):
         cached_definitions[word] = definition
         return definition
     
-    # If not in local cache, try Free Dictionary API
+    # If not in local cache, try Merriam-Webster API
     try:
+        mw_definition = mw_api.get_definition(word)
+        
+        if mw_definition:
+            # Cache the definition locally
+            cache_definition(word, mw_definition)
+            cached_definitions[word] = mw_definition
+            return mw_definition
+        
+        # If Merriam-Webster API fails, try Free Dictionary API as backup
         url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{quote_plus(word)}"
         response = requests.get(url, timeout=5)
         
@@ -59,7 +71,7 @@ def fetch_definition(word):
                     cached_definitions[word] = definition
                     return definition
         
-        # If API fails or no definition found, provide a default message
+        # If all APIs fail or no definition found, provide a default message
         default_message = f"No definition available for '{word}'"
         cached_definitions[word] = default_message
         return default_message
