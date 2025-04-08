@@ -4,9 +4,137 @@ from letter_bank import LetterBank, PlayerHand
 import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QGridLayout, QLabel, QFrame, QHBoxLayout, QStatusBar, QPushButton)
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt, QMimeData, QPoint, QEvent
+from PyQt5.QtGui import QFont, QDrag, QPixmap, QPainter
 from PyQt5.QtWidgets import QInputDialog
+
+class DraggableTile(QLabel):
+    """
+    Custom QLabel subclass that implements drag functionality for letter tiles.
+    This allows players to drag letters directly from their tile rack to the board.
+    """
+    
+    def __init__(self, text, letter, index, parent=None):
+        """
+        Initialize a draggable tile.
+        
+        Args:
+            text (str): The text to display on the tile
+            letter (str): The underlying letter (may be different from displayed text for blank tiles)
+            index (int): The index of this tile in the player's hand
+            parent: Parent widget
+        """
+        super().__init__(text, parent)
+        self.letter = letter
+        self.index = index
+        self.setFixedSize(35, 35)
+        self.setAlignment(Qt.AlignCenter)
+        self.setFrameShape(QFrame.Box)
+        self.setFont(QFont('Arial', 12, QFont.Bold))
+        self.setStyleSheet("background-color: #ffffcc;")
+        
+        # Enable mouse tracking for this widget
+        self.setMouseTracking(True)
+        
+    def mousePressEvent(self, event):
+        """Handle mouse press events for tile selection and initiating drag."""
+        if event.button() == Qt.LeftButton:
+            # If just clicked (not dragged), emit a signal or call a method
+            self.parent().select_letter(self.letter, self.index)
+            
+            # Store the position for potential drag
+            self.drag_start_position = event.pos()
+    
+    def mouseMoveEvent(self, event):
+        """Handle mouse move events to initiate dragging."""
+        # Check if left button is pressed and if we've moved far enough to start a drag
+        if not (event.buttons() & Qt.LeftButton):
+            return
+            
+        if not hasattr(self, 'drag_start_position'):
+            return
+            
+        # Minimum distance to register as a drag rather than a click
+        if (event.pos() - self.drag_start_position).manhattanLength() < QApplication.startDragDistance():
+            return
+            
+        # Start drag
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        
+        # Store the letter and index data
+        mime_data.setText(f"{self.letter},{self.index}")
+        drag.setMimeData(mime_data)
+        
+        # Create a pixmap for visual feedback during drag
+        pixmap = QPixmap(self.size())
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        self.render(painter)
+        painter.end()
+        drag.setPixmap(pixmap)
+        drag.setHotSpot(event.pos())
+        
+        # Execute the drag
+        drag.exec_(Qt.CopyAction)
+
+class DroppableCell(QLabel):
+    """
+    Custom QLabel subclass that accepts dropped letter tiles on the board.
+    """
+    
+    def __init__(self, row, col, parent=None):
+        """
+        Initialize a droppable cell on the game board.
+        
+        Args:
+            row (int): The row index of this cell
+            col (int): The column index of this cell
+            parent: Parent widget
+        """
+        super().__init__(parent)
+        self.row = row
+        self.col = col
+        self.setFixedSize(40, 40)
+        self.setAlignment(Qt.AlignCenter)
+        self.setFrameShape(QFrame.Box)
+        
+        # Enable drop events
+        self.setAcceptDrops(True)
+        
+    def dragEnterEvent(self, event):
+        """Accept the drag enter event if it has text data (our letter info)."""
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+            # Visual feedback - highlight the cell
+            self.setStyleSheet("border: 2px dashed #333;")
+    
+    def dragLeaveEvent(self, event):
+        """Reset visual styling when drag leaves the cell."""
+        # Reset to original style based on current state/content
+        if self.text():  # If cell already has a letter
+            return  # Style will be managed by refresh_board
+        
+        # Otherwise reset based on special tile status if needed
+        app = QApplication.instance()
+        app.postEvent(self, QEvent(QEvent.Type.UpdateRequest))
+    
+    def dropEvent(self, event):
+        """Handle the drop of a letter tile onto this cell."""
+        if event.mimeData().hasText():
+            # Extract the letter and index from mime data
+            data = event.mimeData().text().split(',')
+            if len(data) == 2:
+                letter, index = data
+                index = int(index)
+                
+                # Call the game's place_letter method with this cell's coordinates
+                # We need to access the main window (parent of the parent widget)
+                main_window = self.window()
+                if hasattr(main_window, 'place_tile_from_drop'):
+                    main_window.place_tile_from_drop(letter, index, self.row, self.col)
+                
+            event.acceptProposedAction()
 
 class WordMosaicApp(QMainWindow):
     def __init__(self):
@@ -125,7 +253,7 @@ class WordMosaicApp(QMainWindow):
         self.cells = {}
         for row in range(15):
             for col in range(15):
-                cell = QLabel()
+                cell = DroppableCell(row, col, board_widget)
                 cell.setFixedSize(40, 40)  # Fixed cell size
                 cell.setAlignment(Qt.AlignCenter)
                 cell.setFrameShape(QFrame.Box)  # Add border
@@ -151,9 +279,6 @@ class WordMosaicApp(QMainWindow):
                 elif row == 7 and col == 7:
                     cell.setStyleSheet("background-color: #ffcccc;")  # Center tile
                     cell.setFont(QFont('Arial', 10, QFont.Bold))  # Smaller font for center tile
-
-                # Add click event
-                cell.mousePressEvent = lambda event, r=row, c=col: self.place_letter(r, c)
 
                 # Store cell reference and add to layout
                 self.cells[(row, col)] = cell
@@ -186,15 +311,7 @@ class WordMosaicApp(QMainWindow):
             # Handle blank tiles explicitly
             display_letter = "" if letter == "0" else letter.upper()
             
-            tile = QLabel(display_letter)
-            tile.setFixedSize(35, 35)
-            tile.setAlignment(Qt.AlignCenter)
-            tile.setFrameShape(QFrame.Box)
-            tile.setFont(QFont('Arial', 12, QFont.Bold))
-            tile.setStyleSheet("background-color: #ffffcc;")
-            
-            # Pass both the letter and its index to the select_letter method
-            tile.mousePressEvent = lambda event, l=letter, idx=i: self.select_letter(l, idx)
+            tile = DraggableTile(display_letter, letter, i, self.letter_bank_widget)
             
             self.letter_bank_layout.addWidget(tile)
             self.letter_tiles.append(tile)
@@ -340,6 +457,52 @@ class WordMosaicApp(QMainWindow):
 
             # Clear selection
             self.selected_letter = None
+
+            # Update letter bank display
+            self.refresh_letter_bank()
+
+            # Update status
+            self.status_bar.showMessage(f"Placed letter at position ({row}, {col})")
+
+        except ValueError as e:
+            self.status_bar.showMessage(f"Invalid placement: {str(e)}")
+    
+    def place_tile_from_drop(self, letter, index, row, col):
+        """
+        Place a letter on the board after it was dragged and dropped.
+        This is similar to place_letter but triggered by drag-and-drop.
+        
+        Args:
+            letter (str): The letter to place
+            index (int): The index of the letter in the player's hand
+            row (int): The row to place the letter at
+            col (int): The column to place the letter at
+        """
+        try:
+            # Handle blank tiles
+            if letter == '0':
+                # Prompt the user to choose a letter for the blank tile
+                chosen_letter, ok = QInputDialog.getText(self, "Choose Letter", "Enter a letter for the blank tile:")
+                if ok and chosen_letter.isalpha() and len(chosen_letter) == 1:
+                    letter = chosen_letter.lower()  # Use the chosen letter
+                else:
+                    self.status_bar.showMessage("Invalid input. Drag cancelled.")
+                    return
+
+            # Try to place the letter using game logic
+            self.game_board.place_letter(letter, row, col)
+
+            # Update the visual board with the letter, using consistent styling
+            self.cells[(row, col)].setText(letter.upper())
+            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc; font-weight: bold;")
+            self.cells[(row, col)].setFont(QFont('Arial', 14, QFont.Bold))
+
+            # Mark special tile as occupied if applicable
+            if (row, col) in self.game_board.special_tiles:
+                self.game_board.special_tiles_occupied[(row, col)] = True
+
+            # Remove from player's hand
+            self.player_hand.remove_letter(letter)
 
             # Update letter bank display
             self.refresh_letter_bank()
