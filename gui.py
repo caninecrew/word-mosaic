@@ -518,6 +518,9 @@ class WordMosaicApp(QMainWindow):
             col (int): The column to place the letter at
         """
         try:
+            # Store original letter (for removing from hand later)
+            original_letter = letter
+            
             # Check if the position is valid before prompting for blank
             # This ensures we only ask for blank input if the position is valid
             if not self.game_board.is_valid_position(row, col) or self.game_board.is_occupied(row, col):
@@ -545,8 +548,8 @@ class WordMosaicApp(QMainWindow):
             if (row, col) in self.game_board.special_tiles:
                 self.game_board.special_tiles_occupied[(row, col)] = True
 
-            # Remove from player's hand
-            self.player_hand.remove_letter('0' if letter != '0' and index >= 0 else letter)
+            # Remove the original letter from player's hand (whether blank '0' or regular)
+            self.player_hand.remove_letter(original_letter)
 
             # Update letter bank display
             self.refresh_letter_bank()
