@@ -329,7 +329,8 @@ class WordMosaicApp(QMainWindow):
             print(f"Words formed: {words_formed}")  # Debugging statement
 
             # Validate word positions
-            for word, positions in words_formed:
+            for word_data in words_formed:
+                word, positions = word_data
                 print(f"Validating word: {word}, positions: {positions}")  # Debugging statement
                 if not isinstance(word, str):
                     raise TypeError(f"Expected 'word' to be a string, but got {type(word).__name__}: {word}")
