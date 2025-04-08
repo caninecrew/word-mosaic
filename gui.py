@@ -521,10 +521,13 @@ class WordMosaicApp(QMainWindow):
             # Store original letter (for removing from hand later)
             original_letter = letter
             
-            # Check if the position is valid before prompting for blank
-            # This ensures we only ask for blank input if the position is valid
-            if not self.game_board.is_valid_position(row, col) or self.game_board.is_occupied(row, col):
-                raise ValueError(f"Position ({row}, {col}) is invalid or already occupied")
+            # First validate the position is valid and unoccupied
+            # This ensures we only ask for blank input if the position is within board boundaries
+            if not self.game_board.is_valid_position(row, col):
+                raise ValueError(f"Position ({row}, {col}) is outside the board boundaries")
+                
+            if self.game_board.is_occupied(row, col):
+                raise ValueError(f"Position ({row}, {col}) is already occupied")
                 
             # Handle blank tiles after validating the position
             if letter == '0':
