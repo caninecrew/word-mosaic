@@ -1,6 +1,6 @@
 """
 Merriam-Webster API for Word Mosaic game
-Provides functions to validate words against the Merriam-Webster dictionary via API
+Provides functions to validate words against the Merriam-Webster dictionaries via API
 """
 
 import os
@@ -12,17 +12,36 @@ import time
 # Load environment variables from .env file
 load_dotenv()
 
+class DictionaryType:
+    """
+    Enumeration of available dictionary types
+    """
+    COLLEGIATE = "collegiate"
+    LEARNERS = "learners"
+
 class MerriamWebsterAPI:
     """
-    API client for validating words against the Merriam-Webster Collegiate Dictionary
+    API client for validating words against Merriam-Webster dictionaries
     """
-    def __init__(self):
-        """Initialize the Merriam-Webster API client"""
-        # Get API key from environment variable
-        self.api_key = os.getenv("MERRIAM_WEBSTER_API_KEY")
+    def __init__(self, dictionary_type=DictionaryType.COLLEGIATE):
+        """
+        Initialize the Merriam-Webster API client
         
-        # Base URL for the Merriam-Webster Collegiate Dictionary API
-        self.base_url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json"
+        Args:
+            dictionary_type: The type of dictionary to use (collegiate or learners)
+        """
+        # Set dictionary type
+        self.dictionary_type = dictionary_type
+        
+        # Get API key from environment variable based on dictionary type
+        if dictionary_type == DictionaryType.COLLEGIATE:
+            self.api_key = os.getenv("MW_COLLEGIATE_API_KEY")
+            # Base URL for the Merriam-Webster Collegiate Dictionary API
+            self.base_url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json"
+        else:  # Learners dictionary
+            self.api_key = os.getenv("MW_LEARNERS_API_KEY")
+            # Base URL for the Merriam-Webster Learner's Dictionary API
+            self.base_url = "https://www.dictionaryapi.com/api/v3/references/learners/json"
         
         # Cache for validated words to reduce API calls
         self.word_cache = {}
@@ -45,12 +64,14 @@ class MerriamWebsterAPI:
         word = word.lower().strip()
         
         # Check cache first to avoid unnecessary API calls
-        if word in self.word_cache:
-            return self.word_cache[word]
+        cache_key = f"{self.dictionary_type}:{word}"
+        if cache_key in self.word_cache:
+            return self.word_cache[cache_key]
         
         # If no API key is set, fall back to local validation
         if not self.api_key:
-            print("Warning: Merriam-Webster API key not found. Please set MERRIAM_WEBSTER_API_KEY environment variable.")
+            dict_name = "Collegiate" if self.dictionary_type == DictionaryType.COLLEGIATE else "Learner's"
+            print(f"Warning: Merriam-Webster {dict_name} API key not found. Please set the appropriate environment variable.")
             return self._fallback_validation(word)
         
         try:
@@ -83,7 +104,7 @@ class MerriamWebsterAPI:
                         is_valid = True
                 
                 # Cache the result
-                self.word_cache[word] = is_valid
+                self.word_cache[cache_key] = is_valid
                 
                 return is_valid
             else:
@@ -92,7 +113,8 @@ class MerriamWebsterAPI:
                 return self._fallback_validation(word)
                 
         except Exception as e:
-            print(f"Error validating word through Merriam-Webster API: {str(e)}")
+            dict_name = "Collegiate" if self.dictionary_type == DictionaryType.COLLEGIATE else "Learner's"
+            print(f"Error validating word through Merriam-Webster {dict_name} API: {str(e)}")
             # Fall back to local validation in case of error
             return self._fallback_validation(word)
     
@@ -123,7 +145,8 @@ class MerriamWebsterAPI:
         
         # If no API key is set, return None
         if not self.api_key:
-            print("Warning: Merriam-Webster API key not found. Please set MERRIAM_WEBSTER_API_KEY environment variable.")
+            dict_name = "Collegiate" if self.dictionary_type == DictionaryType.COLLEGIATE else "Learner's"
+            print(f"Warning: Merriam-Webster {dict_name} API key not found. Please set the appropriate environment variable.")
             return None
         
         try:
@@ -147,10 +170,25 @@ class MerriamWebsterAPI:
                 if not results or isinstance(results[0], str):
                     return None
                 
-                # Extract the first definition
+                # Extract the definitions based on dictionary type
                 first_entry = results[0]
-                if 'shortdef' in first_entry and first_entry['shortdef']:
-                    return first_entry['shortdef'][0]
+                if self.dictionary_type == DictionaryType.COLLEGIATE:
+                    if 'shortdef' in first_entry and first_entry['shortdef']:
+                        return first_entry['shortdef'][0]
+                else:  # Learner's dictionary has a slightly different format
+                    if 'def' in first_entry and first_entry['def']:
+                        senses = first_entry['def'][0].get('sseq', [])
+                        if senses and len(senses) > 0:
+                            # Extract the first definition from the structure
+                            # Learner's dictionary has a more complex structure
+                            for sense_group in senses:
+                                for sense in sense_group:
+                                    if len(sense) > 1 and isinstance(sense[1], dict):
+                                        if 'dt' in sense[1]:
+                                            dt = sense[1]['dt']
+                                            for d in dt:
+                                                if d[0] == 'text':
+                                                    return d[1]
                 
                 return None
             else:
@@ -158,8 +196,36 @@ class MerriamWebsterAPI:
                 return None
                 
         except Exception as e:
-            print(f"Error getting definition through Merriam-Webster API: {str(e)}")
+            dict_name = "Collegiate" if self.dictionary_type == DictionaryType.COLLEGIATE else "Learner's"
+            print(f"Error getting definition through Merriam-Webster {dict_name} API: {str(e)}")
             return None
+    
+    def get_dictionary_type(self):
+        """
+        Get the current dictionary type
+        
+        Returns:
+            str: The current dictionary type
+        """
+        return self.dictionary_type
+    
+    def set_dictionary_type(self, dictionary_type):
+        """
+        Set the dictionary type
+        
+        Args:
+            dictionary_type: The type of dictionary to use
+        """
+        if dictionary_type != self.dictionary_type:
+            self.dictionary_type = dictionary_type
+            
+            # Update API key and base URL based on the new dictionary type
+            if dictionary_type == DictionaryType.COLLEGIATE:
+                self.api_key = os.getenv("MW_COLLEGIATE_API_KEY")
+                self.base_url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json"
+            else:  # Learners dictionary
+                self.api_key = os.getenv("MW_LEARNERS_API_KEY")
+                self.base_url = "https://www.dictionaryapi.com/api/v3/references/learners/json"
     
     def _respect_rate_limit(self):
         """

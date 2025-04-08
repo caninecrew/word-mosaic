@@ -1,14 +1,21 @@
 import sqlite3
-from merriam_webster_api import MerriamWebsterAPI
+from merriam_webster_api import MerriamWebsterAPI, DictionaryType
 
 class WordValidator:
     """
     Validates words against a dictionary using the Merriam-Webster API.
     Falls back to SQLite database if the API is unavailable.
     """
-    def __init__(self, db_path="dictionary.db"):
-        # Initialize the Merriam-Webster API client
-        self.mw_api = MerriamWebsterAPI()
+    def __init__(self, dictionary_type=DictionaryType.COLLEGIATE, db_path="dictionary.db"):
+        """
+        Initialize the word validator with the specified dictionary type.
+        
+        Args:
+            dictionary_type: The type of dictionary to use (DictionaryType.COLLEGIATE or DictionaryType.LEARNERS)
+            db_path: Path to the SQLite database for fallback word validation
+        """
+        # Initialize the Merriam-Webster API client with the specified dictionary type
+        self.mw_api = MerriamWebsterAPI(dictionary_type=dictionary_type)
         
         # Also maintain the SQLite connection as fallback
         try:
@@ -42,6 +49,27 @@ class WordValidator:
         self.cursor.executemany("INSERT INTO dictionary VALUES (?)", [(w,) for w in common_words])
         self.conn.commit()
 
+    def get_dictionary_type(self):
+        """
+        Get the current dictionary type.
+        
+        Returns:
+            str: The current dictionary type
+        """
+        return self.mw_api.get_dictionary_type()
+    
+    def set_dictionary_type(self, dictionary_type):
+        """
+        Set the dictionary type.
+        
+        Args:
+            dictionary_type: The type of dictionary to use (DictionaryType.COLLEGIATE or DictionaryType.LEARNERS)
+        """
+        self.mw_api.set_dictionary_type(dictionary_type)
+        
+        # Clear any cached validations to ensure they're re-validated with the new dictionary
+        self.mw_api.word_cache = {}
+
     def validate_word(self, word):
         """
         Check if a word is valid using the Merriam-Webster API.
@@ -57,7 +85,8 @@ class WordValidator:
         try:
             return self.mw_api.validate_word(word)
         except Exception as e:
-            print(f"Merriam-Webster API error, falling back to database: {e}")
+            dict_name = "Collegiate" if self.get_dictionary_type() == DictionaryType.COLLEGIATE else "Learner's"
+            print(f"Merriam-Webster {dict_name} API error, falling back to database: {e}")
             # Fall back to SQLite database if the API fails
             self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
             return self.cursor.fetchone() is not None
@@ -105,6 +134,18 @@ class WordValidator:
         """
         # Try to get definition from Merriam-Webster API
         return self.mw_api.get_definition(word)
+
+    def get_dictionary_name(self):
+        """
+        Get a user-friendly name of the current dictionary.
+        
+        Returns:
+            str: The name of the current dictionary
+        """
+        if self.get_dictionary_type() == DictionaryType.COLLEGIATE:
+            return "Merriam-Webster's Collegiate Dictionary"
+        else:
+            return "Merriam-Webster's Learner's Dictionary"
 
     def dictionary_size(self):
         """
