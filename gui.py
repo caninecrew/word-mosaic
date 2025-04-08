@@ -84,6 +84,9 @@ class WordMosaicApp(QMainWindow):
         
         # Create control buttons
         self.create_control_buttons()
+        
+        # Create definitions display
+        self.create_definitions_display()
     
     def create_score_display(self):
         """
@@ -216,6 +219,27 @@ class WordMosaicApp(QMainWindow):
         
         # Add buttons widget to main layout
         self.layout.addWidget(buttons_widget)
+    
+    def create_definitions_display(self):
+        """
+        Create a widget to display word definitions.
+        """
+        definitions_widget = QWidget()
+        definitions_layout = QVBoxLayout(definitions_widget)
+        
+        # Definitions label
+        definitions_label = QLabel("Word Definitions:")
+        definitions_label.setFont(QFont('Arial', 12))
+        definitions_layout.addWidget(definitions_label)
+        
+        # Placeholder for definitions content
+        self.definitions_content = QLabel("")
+        self.definitions_content.setFont(QFont('Arial', 10))
+        self.definitions_content.setWordWrap(True)
+        definitions_layout.addWidget(self.definitions_content)
+        
+        # Add definitions widget to main layout
+        self.layout.addWidget(definitions_widget)
     
     def refresh_letter_bank(self):
         """
@@ -366,6 +390,13 @@ class WordMosaicApp(QMainWindow):
             print(f"Updated total score: {self.score}")
             self.score_value.setText(str(self.score))
             print(f"Score display updated to: {self.score_value.text()}")
+
+            # Get definitions for the words
+            from dictionary_api import format_definitions
+            word_list = [word for word, _ in words_formed]
+            formatted_definitions = format_definitions(word_list)
+            self.definitions_content.setText(formatted_definitions)
+            self.definitions_content.setTextFormat(Qt.RichText)
 
             # Replenish player's hand
             print(f"Replenishing player's hand with {len(words_formed)} new letters...")
