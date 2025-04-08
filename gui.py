@@ -354,7 +354,8 @@ class WordMosaicApp(QMainWindow):
         """
         board_widget = QWidget()
         board_layout = QGridLayout(board_widget)
-        board_layout.setSpacing(2)  # Space between cells
+        board_layout.setSpacing(1)  # Reduced spacing between cells for a tighter grid
+        board_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins around the grid
 
         # Create 15x15 grid of cells
         self.cells = {}
@@ -368,7 +369,7 @@ class WordMosaicApp(QMainWindow):
                 if special_tile == 'TW':
                     cell.setStyleSheet("background-color: #ff9999; border: 1px solid #dddddd;")  # Triple Word
                     cell.setText("TW")
-                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))  # Use letter_display instead of setFont
+                    cell.letter_display.setFont(QFont('Arial', 12, QFont.Bold))
                 elif special_tile == 'DW':
                     cell.setStyleSheet("background-color: #ffcc99; border: 1px solid #dddddd;")  # Double Word
                     cell.setText("DW")
