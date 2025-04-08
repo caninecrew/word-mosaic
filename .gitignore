@@ -2,3 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# databases
+*.sqlite3
+*.db
