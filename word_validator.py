@@ -37,7 +37,7 @@ class WordValidator:
         print("Creating fallback in-memory dictionary")
         self.conn = sqlite3.connect(":memory:")
         self.cursor = self.conn.cursor()
-        self.cursor.execute("CREATE TABLE dictionary (word TEXT PRIMARY KEY)")
+        self.cursor.execute("CREATE TABLE dictionary (word TEXT PRIMARY KEY, definition TEXT)")
         
         # Add some common English words as fallback
         common_words = [
@@ -49,7 +49,7 @@ class WordValidator:
             "game", "play", "word", "letter", "score", "board", "tiles", "win",
             "dare", "date", "data", "dark", "dash", "darn", "dart"  # Added additional common d-words
         ]
-        self.cursor.executemany("INSERT INTO dictionary VALUES (?)", [(w,) for w in common_words])
+        self.cursor.executemany("INSERT INTO dictionary (word) VALUES (?)", [(w,) for w in common_words])
         self.conn.commit()
 
     def validate_word(self, word):
@@ -122,6 +122,39 @@ class WordValidator:
         """
         # Try to get definition from Merriam-Webster API
         return self.mw_api.get_definition(word)
+
+    def get_definition_from_merriam_webster(self, word):
+        """
+        Retrieve the definition of a word from the Merriam-Webster dictionary database.
+
+        Args:
+            word (str): The word to retrieve the definition for.
+
+        Returns:
+            str: The definition if found, or None if not found.
+        """
+        try:
+            self.cursor.execute("SELECT definition FROM dictionary WHERE word = ?", (word.lower(),))
+            result = self.cursor.fetchone()
+            if result:
+                return result[0]
+        except sqlite3.Error as e:
+            print(f"SQLite error while retrieving definition: {e}")
+        return None
+
+    def add_to_merriam_webster_db(self, word, definition):
+        """
+        Add a word and its definition to the Merriam-Webster dictionary database.
+
+        Args:
+            word (str): The word to add.
+            definition (str): The definition of the word.
+        """
+        try:
+            self.cursor.execute("INSERT OR REPLACE INTO dictionary (word, definition) VALUES (?, ?)", (word.lower(), definition))
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"SQLite error while adding word to database: {e}")
 
     def dictionary_size(self):
         """
