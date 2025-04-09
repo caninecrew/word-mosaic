@@ -1,8 +1,10 @@
 import sqlite3
+from merriam_webster_api import merriam_webster
 
 class WordValidator:
     """
-    Validates words against a dictionary stored in an SQLite database.
+    Validates words against Merriam-Webster Dictionary API (primary) and 
+    local SQLite database (fallback).
     """
     def __init__(self, db_path="dictionary.db"):
         try:
@@ -38,7 +40,7 @@ class WordValidator:
 
     def validate_word(self, word):
         """
-        Check if a word is valid.
+        Check if a word is valid using Merriam-Webster API first, then fallback to local database.
 
         Args:
             word (str): The word to validate
@@ -46,6 +48,14 @@ class WordValidator:
         Returns:
             bool: True if the word is valid, False otherwise
         """
+        # First try Merriam-Webster API
+        api_result = merriam_webster.is_valid_word(word.lower())
+        
+        # If API provides a definite answer, return it
+        if api_result is not None:
+            return api_result
+        
+        # Fallback to local database
         self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
         return self.cursor.fetchone() is not None
 

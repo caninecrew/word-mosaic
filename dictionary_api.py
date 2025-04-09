@@ -8,13 +8,14 @@ import json
 from urllib.parse import quote_plus
 import sqlite3
 import os
+from merriam_webster_api import merriam_webster
 
 # Dictionary of cached definitions to avoid repeated API calls
 cached_definitions = {}
 
 def fetch_definition(word):
     """
-    Fetch definition for a word from a dictionary API or local cache
+    Fetch definition for a word from Merriam-Webster API or local cache
     
     Args:
         word (str): The word to look up
@@ -35,38 +36,18 @@ def fetch_definition(word):
         cached_definitions[word] = definition
         return definition
     
-    # If not in local cache, try Free Dictionary API
-    try:
-        url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{quote_plus(word)}"
-        response = requests.get(url, timeout=5)
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            if data and isinstance(data, list) and len(data) > 0:
-                meanings = data[0].get('meanings', [])
-                
-                if meanings:
-                    # Get the first definition
-                    definition_text = meanings[0].get('definitions', [{}])[0].get('definition', '')
-                    part_of_speech = meanings[0].get('partOfSpeech', '')
-                    
-                    # Format the definition
-                    definition = f"{part_of_speech}: {definition_text}" if part_of_speech else definition_text
-                    
-                    # Cache the definition locally
-                    cache_definition(word, definition)
-                    cached_definitions[word] = definition
-                    return definition
-        
-        # If API fails or no definition found, provide a default message
-        default_message = f"No definition available for '{word}'"
-        cached_definitions[word] = default_message
-        return default_message
-        
-    except Exception as e:
-        # Handle any errors (timeout, connection issues, etc.)
-        return f"Could not retrieve definition for '{word}': {str(e)}"
+    # Try Merriam-Webster API
+    mw_definition = merriam_webster.fetch_definition(word)
+    if mw_definition:
+        # Cache the definition locally
+        cache_definition(word, mw_definition)
+        cached_definitions[word] = mw_definition
+        return mw_definition
+    
+    # If Merriam-Webster fails, return a default message
+    default_message = f"No definition available for '{word}'"
+    cached_definitions[word] = default_message
+    return default_message
 
 def format_definitions(words):
     """
