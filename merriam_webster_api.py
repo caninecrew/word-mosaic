@@ -345,5 +345,30 @@ class MerriamWebsterAPI:
         except Exception as e:
             print(f"Error caching definition: {e}")
 
+    def get_dictionary_info(self):
+        """
+        Get information about the current dictionary
+        
+        Returns:
+            dict: Dictionary information including name, API availability, and dictionary type
+        """
+        # Set the dictionary display name based on type
+        if self.dictionary_url_part == "collegiate":
+            name = "Merriam-Webster's Collegiate® Dictionary"
+        elif self.dictionary_url_part == "learners":
+            name = "Merriam-Webster's Learner's Dictionary"
+        else:
+            name = f"Merriam-Webster {self.dictionary_url_part.capitalize()}"
+            
+        # Build the information dictionary
+        info = {
+            'name': name,
+            'type': self.dictionary_type,
+            'api_available': bool(self.api_key),
+            'url_part': self.dictionary_url_part
+        }
+            
+        return info
+
 # Create a global instance with default settings
 merriam_webster = MerriamWebsterAPI()

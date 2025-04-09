@@ -7,6 +7,10 @@ Main entry point for the game
 import sys
 import os
 from PyQt5.QtWidgets import QApplication
+from board import Board
+from letter_bank import LetterBank
+from scoring import Scoring
+from word_validator import WordValidator
 
 # Ensure necessary databases exist before starting
 from database import create_database

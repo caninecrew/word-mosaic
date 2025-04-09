@@ -207,6 +207,49 @@ class LetterBank:
         bank.letter_bank_total = data.get("letter_bank_total", 0)
         return bank
 
+    def has_letters(self, word):
+        """
+        Check if the letter bank has the necessary letters to form a word.
+        
+        Args:
+            word (str): The word to check
+            
+        Returns:
+            bool: True if the letter bank has all necessary letters, False otherwise
+        """
+        word = word.lower()
+        temp_bank = self.letter_bank.copy()
+        for letter in word:
+            if letter not in temp_bank or temp_bank[letter] <= 0:
+                return False
+            temp_bank[letter] -= 1
+        return True
+        
+    def use_letters(self, word):
+        """
+        Remove letters from the bank to form the specified word.
+        
+        Args:
+            word (str): The word to form
+            
+        Returns:
+            bool: True if successful, False if not enough letters
+            
+        Raises:
+            ValueError: If the word contains letters not in the bank
+        """
+        word = word.lower()
+        if not self.has_letters(word):
+            return False
+            
+        for letter in word:
+            self.letter_bank[letter] -= 1
+            self.letter_bank_total -= 1
+            # If count is 0, remove the letter from the bank
+            if self.letter_bank[letter] == 0:
+                del self.letter_bank[letter]
+        return True
+
 
 class PlayerHand:
     """

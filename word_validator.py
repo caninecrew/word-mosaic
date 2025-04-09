@@ -1,5 +1,5 @@
 import sqlite3
-from merriam_webster_api import merriam_webster
+from merriam_webster_api import merriam_webster, MerriamWebsterAPI
 
 class WordValidator:
     """
@@ -153,9 +153,23 @@ class WordValidator:
         Get information about the current dictionary
         
         Returns:
-            dict: Dictionary information
+            dict: Dictionary information including name, API availability, and word count
         """
-        return self.mw_api.get_dictionary_info()
+        # Get basic information about the dictionary
+        info = {
+            'name': self.dictionary_name,
+            'type': self.dictionary_type,
+            'api_available': hasattr(self.mw_api, 'api_key') and bool(self.mw_api.api_key)
+        }
+        
+        # Get the count of words in the local database
+        try:
+            self.cursor.execute("SELECT COUNT(*) FROM dictionary")
+            info['db_word_count'] = self.cursor.fetchone()[0]
+        except (sqlite3.Error, AttributeError):
+            info['db_word_count'] = 0
+            
+        return info
 
     def close(self):
         """Close the database connection."""
