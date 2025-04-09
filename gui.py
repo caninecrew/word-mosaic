@@ -313,9 +313,9 @@ class WordMosaicApp(QMainWindow):
                 # After placing, check for valid words
                 self._check_for_words()
                 
-                self.statusBar().showMessage(f"Letter placed at position ({row}, {col})")
+                self.status_bar.showMessage(f"Letter placed at position ({row}, {col})")
             except ValueError as e:
-                self.statusBar().showMessage(f"Cannot place letter: {str(e)}")
+                self.status_bar.showMessage(f"Cannot place letter: {str(e)}")
         else:
             # If no letter is selected, check if there's a letter on the cell that can be removed
             letter_removed = False
@@ -334,12 +334,12 @@ class WordMosaicApp(QMainWindow):
                     self.update_board_display()
                     self.update_letter_bank_display()
                     
-                    self.statusBar().showMessage(f"Letter removed from position ({row}, {col})")
+                    self.status_bar.showMessage(f"Letter removed from position ({row}, {col})")
                     letter_removed = True
                     break
                     
             if not letter_removed:
-                self.statusBar().showMessage("Select a letter first, then click on the board to place it")
+                self.status_bar.showMessage("Select a letter first, then click on the board to place it")
     
     def _create_letter_bank_frame(self):
         """Create the frame that displays available letters."""
@@ -390,9 +390,9 @@ class WordMosaicApp(QMainWindow):
         
     def _create_status_bar(self):
         """Create a status bar for game messages."""
-        self.statusBar = QStatusBar()
-        self.setStatusBar(self.statusBar)
-        self.statusBar.showMessage("Ready to play!")
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+        self.status_bar.showMessage("Ready to play!")
         
     def select_letter(self, letter):
         """Handle selection of a letter from the letter bank."""
@@ -406,14 +406,14 @@ class WordMosaicApp(QMainWindow):
         # Update the selected letter
         if self.selected_letter == letter:  # If clicking the same letter, deselect it
             self.selected_letter = None
-            self.statusBar().showMessage("Letter deselected")
+            self.status_bar.showMessage("Letter deselected")
         else:
             self.selected_letter = letter
             # Update the visual selection state
             for letter_label in self.letter_labels:
                 if letter_label.letter == letter:
                     letter_label.set_selected(True)
-                    self.statusBar().showMessage(f"Selected letter: {letter}")
+                    self.status_bar.showMessage(f"Selected letter: {letter}")
                     break
     
     def update_board_display(self):
@@ -473,7 +473,7 @@ class WordMosaicApp(QMainWindow):
     def end_turn(self):
         """End the current turn and process the words formed."""
         if not self.current_turn_tiles:
-            self.statusBar().showMessage("No letters placed this turn")
+            self.status_bar.showMessage("No letters placed this turn")
             return
             
         # Get all words formed
@@ -510,7 +510,7 @@ class WordMosaicApp(QMainWindow):
                 
             if reply == QMessageBox.Yes:
                 # Player wants to continue modifying - keep the current state
-                self.statusBar().showMessage("Continue placing or modifying letters")
+                self.status_bar.showMessage("Continue placing or modifying letters")
                 return
             
         # Continue with turn submission - calculate score for valid words
@@ -518,7 +518,7 @@ class WordMosaicApp(QMainWindow):
         for word, positions in valid_words:
             word_score = self.game.scoring.calculate_word_score(word, positions)
             turn_score += word_score
-            self.statusBar().showMessage(f"Word '{word}' scores {word_score} points!")
+            self.status_bar.showMessage(f"Word '{word}' scores {word_score} points!")
             
         self.game.score += turn_score
         self.update_score_display()
@@ -547,14 +547,14 @@ class WordMosaicApp(QMainWindow):
         """Shuffle the letters in the player's hand."""
         if self.game.letter_bank.player_hand.shuffle_letters():
             self.update_letter_bank_display()
-            self.statusBar().showMessage("Letters shuffled!")
+            self.status_bar.showMessage("Letters shuffled!")
         else:
-            self.statusBar().showMessage("No letters to shuffle!")
+            self.status_bar.showMessage("No letters to shuffle!")
     
     def reset_turn(self):
         """Reset the current turn, returning all placed letters to the hand."""
         if not self.current_turn_tiles:
-            self.statusBar().showMessage("No letters placed this turn")
+            self.status_bar.showMessage("No letters placed this turn")
             return
             
         # Remove letters from the board and return them to the player's hand
@@ -572,7 +572,7 @@ class WordMosaicApp(QMainWindow):
         self.update_board_display()
         self.update_letter_bank_display()
         
-        self.statusBar().showMessage("Turn reset!")
+        self.status_bar.showMessage("Turn reset!")
     
     def _check_for_words(self):
         """Check if any words have been formed with the placed letters."""
@@ -582,9 +582,9 @@ class WordMosaicApp(QMainWindow):
                 # Validate the word
                 if self.game.word_validator.validate_word(word):
                     word_score = self.game.scoring.calculate_word_score(word, positions)
-                    self.statusBar().showMessage(f"Formed valid word: '{word}' for {word_score} points")
+                    self.status_bar.showMessage(f"Formed valid word: '{word}' for {word_score} points")
                 else:
-                    self.statusBar().showMessage(f"Warning: '{word}' is not a valid word")
+                    self.status_bar.showMessage(f"Warning: '{word}' is not a valid word")
     
     def new_game(self):
         """Start a new game."""
@@ -592,7 +592,7 @@ class WordMosaicApp(QMainWindow):
         self.update_board_display()
         self.update_letter_bank_display()
         self.update_score_display()
-        self.statusBar().showMessage("New game started!")
+        self.status_bar.showMessage("New game started!")
         
     def show_high_scores(self):
         """Show high scores dialog."""
@@ -613,7 +613,7 @@ class WordMosaicApp(QMainWindow):
             self.dictionary_actions[1].setChecked(True)
             
         self.dictionary_label.setText(f"Dictionary: {self.game.word_validator.dictionary_name}")
-        self.statusBar().showMessage(f"Switched to {info.get('name', dictionary_type)} dictionary.")
+        self.status_bar.showMessage(f"Switched to {info.get('name', dictionary_type)} dictionary.")
         
     def show_rules(self):
         """Show game rules."""
