@@ -107,7 +107,8 @@ def main():
     """Main entry point for Word Mosaic game"""
     initialize_databases()
     app = QApplication(sys.argv)
-    window = WordMosaicApp()
+    game = Game()
+    window = WordMosaicApp(game)
     
     # Clear definitions after each turn
     window.clear_definitions()
