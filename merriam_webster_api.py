@@ -13,6 +13,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Define constants for dictionary types
+COLLEGIATE = "collegiate"
+LEARNERS = "learners"
+
+# Export constants for external use
+__all__ = ["COLLEGIATE", "LEARNERS", "MerriamWebsterAPI", "merriam_webster"]
+
 # Dictionary of cached validation results to avoid repeated API calls
 cached_validations = {}
 

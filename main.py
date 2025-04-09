@@ -6,6 +6,7 @@ Main entry point for the game
 
 import sys
 import os
+from PyQt5.QtWidgets import QApplication
 
 # Ensure necessary databases exist before starting
 from database import create_database
