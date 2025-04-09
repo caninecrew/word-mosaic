@@ -286,6 +286,9 @@ class WordMosaicApp(QMainWindow):
         self.player_hand.fill_initial_hand()
         self.score = 0
         
+        # Track tiles placed in the current turn
+        self.current_turn_tiles = []
+        
         # Create central widget and layout
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -593,6 +596,9 @@ class WordMosaicApp(QMainWindow):
             # Remove from player's hand
             self.player_hand.remove_letter(self.selected_letter)
 
+            # Add to current turn tiles
+            self.current_turn_tiles.append((row, col))
+
             # Clear selection
             self.selected_letter = None
 
@@ -657,6 +663,9 @@ class WordMosaicApp(QMainWindow):
             # Remove the original letter from player's hand (whether blank '0' or regular)
             self.player_hand.remove_letter(original_letter)
 
+            # Add to current turn tiles
+            self.current_turn_tiles.append((row, col))
+
             # Update letter bank display
             self.refresh_letter_bank()
 
@@ -681,7 +690,12 @@ class WordMosaicApp(QMainWindow):
                 self.status_bar.showMessage("No valid words formed")
                 return
 
-            # Validate word positions
+            # Track letters to return to player's hand if invalid words are found
+            letters_to_return = []
+            positions_to_clear = []
+            valid_words = []
+
+            # Validate word positions and check if words are valid
             for word_data in words_formed:
                 word, positions = word_data
                 print(f"Validating word: {word}, positions: {positions}")  # Debugging statement
@@ -691,18 +705,49 @@ class WordMosaicApp(QMainWindow):
                     raise TypeError(f"Expected 'word' to be a string, but got {type(word).__name__}: {word}")
 
                 # Convert word to uppercase for validation or display
-                word = word.upper()
+                word_upper = word.upper()
 
-                print(f"Submitting word: {word}, positions: {positions}")  # Debugging statement
+                print(f"Submitting word: {word_upper}, positions: {positions}")  # Debugging statement
                 print(f"Current score before submission: {self.score}")  # Debugging statement
 
                 if not self.game_board.validate_word_positions(word, positions):
-                    self.status_bar.showMessage(f"Invalid word placement: {word}")
+                    self.status_bar.showMessage(f"Invalid word placement: {word_upper}")
                     return
 
-            # Calculate the turn score
+                # Validate using Merriam-Webster API
+                if not self.game_board.validate_word(word):
+                    print(f"Invalid word detected: {word_upper}")
+                    self.status_bar.showMessage(f"Invalid word: {word_upper}. Tiles returned to your hand.")
+                    
+                    # Get letters at positions from current turn only
+                    for row, col in positions:
+                        if (row, col) in self.current_turn_tiles:
+                            letter = self.game_board.get_letter(row, col)
+                            if letter:
+                                letters_to_return.append(letter)
+                                positions_to_clear.append((row, col))
+                else:
+                    valid_words.append(word_data)
+
+            # Clear invalid word positions from board (only current turn tiles)
+            for row, col in positions_to_clear:
+                self.game_board.clear_position(row, col)
+                if (row, col) in self.current_turn_tiles:
+                    self.current_turn_tiles.remove((row, col))
+
+            # Return letters to player's hand
+            for letter in letters_to_return:
+                self.player_hand.add_letter(letter.lower())  # Use lowercase for consistency
+
+            # If no valid words remain after clearing invalid tiles, refresh display and return
+            if not valid_words:
+                self.refresh_board()
+                self.refresh_letter_bank()
+                return
+
+            # Calculate the turn score based on valid words only
             print("Calculating turn score...")
-            turn_score = self.game_board.calculate_turn_score(words_formed)
+            turn_score = self.game_board.calculate_turn_score(valid_words)
             print(f"Turn score calculated: {turn_score}")
             
             # Update total score
@@ -716,7 +761,7 @@ class WordMosaicApp(QMainWindow):
             
             # Get definitions for the words in this turn only
             from dictionary_api import format_definitions
-            word_list = [word for word, _ in words_formed]
+            word_list = [word for word, _ in valid_words]
             formatted_definitions = format_definitions(word_list)
             
             # Set new definitions with header indicating these are from the current turn
@@ -724,10 +769,14 @@ class WordMosaicApp(QMainWindow):
             self.definitions_content.setText(current_turn_text)
             self.definitions_content.setTextFormat(Qt.RichText)
 
-            # Replenish player's hand
-            print(f"Replenishing player's hand with {len(words_formed)} new letters...")
+            # Replenish player's hand, accounting for returned tiles
+            print(f"Replenishing player's hand with {len(self.current_turn_tiles)} new letters...")
             print(f"Player hand before refill: {self.player_hand.letter_order}")
-            letters_added = self.player_hand.refill(len(words_formed))
+            
+            # Calculate how many new letters needed after accounting for returned tiles
+            needed_letters = max(0, len(self.current_turn_tiles) - len(letters_to_return))
+            letters_added = self.player_hand.refill(needed_letters)
+            
             print(f"Player hand after refill: {self.player_hand.letter_order}")
             print(f"Letters added: {letters_added}")
 
@@ -738,6 +787,9 @@ class WordMosaicApp(QMainWindow):
             # Update the board and status
             print("Refreshing board display...")
             self.refresh_board()
+            
+            # Clear the current turn tiles list since the turn is complete
+            self.current_turn_tiles = []
             
             # Update status message
             print(f"Setting status message: Turn completed! Score: {turn_score}")
