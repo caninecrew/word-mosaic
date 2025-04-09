@@ -493,13 +493,14 @@ class WordMosaicApp(QMainWindow):
                 f"The following words are not valid: {', '.join(invalid_words)}\n\nPlease try again.")
             return
 
-        # Display words formed and their scores
+        # Display words formed, their scores, and definitions
         turn_score = 0
         words_summary = "Words formed this turn:\n"
         for word, positions in valid_words:
             word_score = self.game.scoring.calculate_word_score(word, positions)
             turn_score += word_score
-            words_summary += f"- {word}: {word_score} points\n"
+            definition = self.game.get_word_definition(word)
+            words_summary += f"- {word}: {word_score} points\n  Definition: {definition}\n"
 
         words_summary += f"\nTotal score this turn: {turn_score}"
         self.status_bar.showMessage(words_summary)
@@ -519,6 +520,24 @@ class WordMosaicApp(QMainWindow):
         # Refill the player's hand
         self.game.letter_bank.refill_hand()
         self.update_letter_bank_display()
+
+        # Update the GUI to show words and definitions
+        self.update_words_display(valid_words)
+
+    def update_words_display(self, valid_words):
+        """Update the GUI to show words formed and their definitions."""
+        if not hasattr(self, 'words_display_label'):
+            self.words_display_label = QLabel()
+            self.words_display_label.setFont(QFont("Arial", 12))
+            self.words_display_label.setStyleSheet("background-color: #ffffff; padding: 10px; border: 1px solid #c0c0c0;")
+            self.main_layout.addWidget(self.words_display_label)
+
+        words_text = "<b>Words Formed:</b><br>"
+        for word, _ in valid_words:
+            definition = self.game.get_word_definition(word)
+            words_text += f"<b>{word}</b>: {definition}<br>"
+
+        self.words_display_label.setText(words_text)
     
     def shuffle_letters(self):
         """Shuffle the letters in the player's hand."""
