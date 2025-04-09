@@ -44,14 +44,17 @@ class MerriamWebsterAPI:
             # Use Collegiate dictionary API key
             self.api_key = api_key or os.environ.get('MERRIAM_WEBSTER_COLLEGIATE_API_KEY')
             self.dictionary_url_part = "collegiate"
+            self.name = "Merriam-Webster's Collegiate® Dictionary"
         elif dict_type_lower == 'learners':
             # Use Learner's dictionary API key
             self.api_key = api_key or os.environ.get('MERRIAM_WEBSTER_LEARNERS_API_KEY')
             self.dictionary_url_part = "learners"
+            self.name = "Merriam-Webster's Learner's Dictionary"
         else:
             # Default to Collegiate
             self.api_key = api_key or os.environ.get('MERRIAM_WEBSTER_COLLEGIATE_API_KEY')
             self.dictionary_url_part = "collegiate"
+            self.name = "Merriam-Webster's Collegiate® Dictionary"
         
         if not self.api_key:
             print(f"Warning: No Merriam-Webster API key provided for {self.dictionary_type} dictionary.")
