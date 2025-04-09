@@ -739,6 +739,13 @@ class WordMosaicApp(QMainWindow):
             for letter in letters_to_return:
                 self.player_hand.add_letter(letter.lower())  # Use lowercase for consistency
 
+            # If letters were returned to the player's hand, clear all definitions
+            if letters_to_return:
+                self.definitions_content.clear()
+                self.refresh_board()
+                self.refresh_letter_bank()
+                return
+
             # If no valid words remain after clearing invalid tiles, refresh display and return
             if not valid_words:
                 self.refresh_board()
