@@ -104,8 +104,31 @@ class Game:
         
     def get_word_definition(self, word):
         """Get a definition for a word if available"""
-        # This would require dictionary API integration
-        return f"Definition for '{word}' (placeholder)"
+        # Check Merriam-Webster dictionary database first
+        definition = self.word_validator.get_definition_from_merriam_webster(word)
+        if definition:
+            return definition
+
+        # If not found, check the local database
+        definition = self.word_validator.get_definition_from_local(word)
+        if definition:
+            return definition
+
+        return f"Definition for '{word}' not found."
+
+    def validate_and_store_word(self, word):
+        """Validate a word and store it in the Merriam-Webster database if found via API."""
+        if self.word_validator.validate_word(word):
+            return True
+
+        # If not in local database, check Merriam-Webster API
+        api_definition = self.word_validator.get_definition_from_api(word)
+        if api_definition:
+            # Add word and its information to Merriam-Webster database
+            self.word_validator.add_to_merriam_webster_db(word, api_definition)
+            return True
+
+        return False
 
 def main():
     """
