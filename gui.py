@@ -531,6 +531,9 @@ class WordMosaicApp(QMainWindow):
         # Clear the current turn's tiles
         self.current_turn_tiles = []
         
+        # Prevent further modifications after ending the turn
+        self.current_turn_tiles = []
+        
         # Refill the player's hand
         self.game.letter_bank.refill_hand()
         self.update_letter_bank_display()
