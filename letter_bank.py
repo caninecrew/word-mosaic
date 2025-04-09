@@ -232,4 +232,13 @@ class LetterBank:
             bool: True if successful, False otherwise
         """
         return self.player_hand.use_letter(letter)
+        
+    def refill_hand(self):
+        """
+        Refill the player's hand to the maximum hand size.
+
+        Returns:
+            bool: True if at least one letter was added, False otherwise
+        """
+        return self.player_hand.refill()
 
