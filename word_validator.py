@@ -1,10 +1,10 @@
 import sqlite3
-from merriam_webster_api import MerriamWebsterAPI, COLLEGIATE, LEARNERS
+from merriam_webster_api import merriam_webster
 
 class WordValidator:
     """
-    Validates words against a dictionary using the Merriam-Webster API.
-    Falls back to SQLite database if the API is unavailable.
+    Validates words against Merriam-Webster Dictionary API (primary) and 
+    local SQLite database (fallback).
     """
     def __init__(self, dictionary_type=None, db_path="dictionary.db"):
         """
@@ -46,15 +46,15 @@ class WordValidator:
             "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
             "an", "will", "my", "one", "all", "would", "there", "their", "what",
             "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
-            "game", "play", "word", "letter", "score", "board", "tiles", "win"
+            "game", "play", "word", "letter", "score", "board", "tiles", "win",
+            "dare", "date", "data", "dark", "dash", "darn", "dart"  # Added additional common d-words
         ]
         self.cursor.executemany("INSERT INTO dictionary VALUES (?)", [(w,) for w in common_words])
         self.conn.commit()
 
     def validate_word(self, word):
         """
-        Check if a word is valid using the Merriam-Webster API.
-        Falls back to the SQLite database if the API is unavailable.
+        Check if a word is valid using Merriam-Webster API first, then fallback to local database.
 
         Args:
             word (str): The word to validate
@@ -62,14 +62,22 @@ class WordValidator:
         Returns:
             bool: True if the word is valid, False otherwise
         """
-        # First try to validate with the Merriam-Webster API
-        try:
-            return self.mw_api.validate_word(word)
-        except Exception as e:
-            print(f"Merriam-Webster API error, falling back to database: {e}")
-            # Fall back to SQLite database if the API fails
-            self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
-            return self.cursor.fetchone() is not None
+        print(f"[DEBUG VALIDATOR] Validating word: '{word}'")
+        
+        # First try Merriam-Webster API
+        api_result = merriam_webster.is_valid_word(word.lower())
+        print(f"[DEBUG VALIDATOR] Merriam-Webster API result for '{word}': {api_result}")
+        
+        # If API provides a definite answer, return it
+        if api_result is not None:
+            return api_result
+        
+        # Fallback to local database
+        self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
+        db_result = self.cursor.fetchone() is not None
+        print(f"[DEBUG VALIDATOR] Local dictionary result for '{word}': {db_result}")
+        
+        return db_result
 
     def validate_words(self, words):
         """

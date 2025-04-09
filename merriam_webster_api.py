@@ -1,241 +1,342 @@
 """
-Merriam-Webster API for Word Mosaic game
-Provides functions to validate words against the Merriam-Webster dictionaries via API
+Merriam-Webster Dictionary API for Word Mosaic game
+Provides functions to fetch word definitions and validate words using the Merriam-Webster API
 """
 
-import os
 import requests
-from dotenv import load_dotenv
 import json
-import time
+from urllib.parse import quote_plus
+import os
+import sqlite3
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Dictionary types
-COLLEGIATE = "COLLEGIATE"
-LEARNERS = "LEARNERS"
+# Dictionary of cached validation results to avoid repeated API calls
+cached_validations = {}
 
 class MerriamWebsterAPI:
     """
-    API client for validating words against the Merriam-Webster dictionaries
+    Class to handle interactions with the Merriam-Webster Dictionary API
     """
-    def __init__(self, dictionary_type=None):
+    def __init__(self, api_key=None, dictionary_type=None):
         """
         Initialize the Merriam-Webster API client
         
         Args:
-            dictionary_type (str, optional): Type of dictionary to use (COLLEGIATE or LEARNERS)
+            api_key (str): The API key for Merriam-Webster Dictionary API
+            dictionary_type (str): The dictionary to use (collegiate or learners)
         """
-        # If no dictionary type is specified, use the default from .env
-        if dictionary_type is None:
-            dictionary_type = os.getenv("DEFAULT_DICTIONARY", COLLEGIATE)
+        # Use provided dictionary type or get from environment
+        self.dictionary_type = dictionary_type or os.environ.get('DEFAULT_DICTIONARY', 'COLLEGIATE')
         
-        self.dictionary_type = dictionary_type
+        # Convert dictionary type to lowercase for API URL
+        dict_type_lower = self.dictionary_type.lower()
+        if dict_type_lower == 'collegiate':
+            # Use Collegiate dictionary API key
+            self.api_key = api_key or os.environ.get('MERRIAM_WEBSTER_COLLEGIATE_API_KEY')
+            self.dictionary_url_part = "collegiate"
+        elif dict_type_lower == 'learners':
+            # Use Learner's dictionary API key
+            self.api_key = api_key or os.environ.get('MERRIAM_WEBSTER_LEARNERS_API_KEY')
+            self.dictionary_url_part = "learners"
+        else:
+            # Default to Collegiate
+            self.api_key = api_key or os.environ.get('MERRIAM_WEBSTER_COLLEGIATE_API_KEY')
+            self.dictionary_url_part = "collegiate"
         
-        # Get API keys from environment variables
-        self.collegiate_api_key = os.getenv("MERRIAM_WEBSTER_COLLEGIATE_API_KEY")
-        self.learners_api_key = os.getenv("MERRIAM_WEBSTER_LEARNERS_API_KEY")
+        if not self.api_key:
+            print(f"Warning: No Merriam-Webster API key provided for {self.dictionary_type} dictionary.")
+            print(f"Set MERRIAM_WEBSTER_{self.dictionary_type}_API_KEY environment variable.")
         
-        # Set up the appropriate API key and base URL based on dictionary type
-        if self.dictionary_type == LEARNERS:
-            self.api_key = self.learners_api_key
-            self.base_url = "https://www.dictionaryapi.com/api/v3/references/learners/json"
-            self.name = "Merriam-Webster's Learner's Dictionary"
-        else:  # Default to collegiate
-            self.api_key = self.collegiate_api_key
-            self.base_url = "https://www.dictionaryapi.com/api/v3/references/collegiate/json"
-            self.name = "Merriam-Webster's Collegiate Dictionary"
+        self.base_url = f"https://www.dictionaryapi.com/api/v3/references/{self.dictionary_url_part}/json/"
         
-        # Cache for validated words to reduce API calls
-        self.word_cache = {}
-        
-        # Rate limiting parameters
-        self.last_request_time = 0
-        self.min_request_interval = 0.2  # Minimum time between requests in seconds
+        # Initialize the definitions database
+        self.create_definitions_database()
 
-    def validate_word(self, word):
+    def create_definitions_database(self):
         """
-        Check if a word is valid in the selected Merriam-Webster dictionary.
+        Create a SQLite database to store word definitions from Merriam-Webster
+        """
+        db_path = os.path.join(os.path.dirname(__file__), "definitions.db")
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Create the definitions table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS merriam_webster_definitions (
+                word TEXT PRIMARY KEY,
+                definition TEXT,
+                is_valid BOOLEAN,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        conn.close()
 
+    def is_valid_word(self, word):
+        """
+        Check if a word exists in the Merriam-Webster dictionary and is not an abbreviation
+        
         Args:
             word (str): The word to validate
-
+            
         Returns:
-            bool: True if the word is valid, False otherwise
+            bool: True if the word is valid and not an abbreviation, False otherwise
         """
         # Convert to lowercase for consistency
         word = word.lower().strip()
         
-        # Check cache first to avoid unnecessary API calls
-        if word in self.word_cache:
-            return self.word_cache[word]
+        print(f"[DEBUG MW API] Checking if '{word}' is valid")
         
-        # If no API key is set, fall back to local validation
+        # Return from cache if available
+        if word in cached_validations:
+            print(f"[DEBUG MW API] Found '{word}' in cache: {cached_validations[word]}")
+            return cached_validations[word]
+        
+        # First, try the local SQLite database for cached validation
+        is_valid = self._get_cached_validation(word)
+        if is_valid is not None:
+            print(f"[DEBUG MW API] Found '{word}' in local DB cache: {is_valid}")
+            cached_validations[word] = is_valid
+            return is_valid
+        
+        # If not in local cache, try Merriam-Webster API
         if not self.api_key:
-            print(f"Warning: {self.name} API key not found. Please set the appropriate environment variable.")
-            return self._fallback_validation(word)
-        
+            # No API key available, return None to indicate fallback needed
+            print(f"[DEBUG MW API] No API key for '{word}', returning None")
+            return None
+            
         try:
-            # Implement rate limiting
-            self._respect_rate_limit()
+            url = f"{self.base_url}{quote_plus(word)}?key={self.api_key}"
+            print(f"[DEBUG MW API] Requesting URL for '{word}': {url}")
+            response = requests.get(url, timeout=5)
             
-            # Construct the API URL
-            url = f"{self.base_url}/{word}?key={self.api_key}"
-            
-            # Make the API request
-            response = requests.get(url)
-            
-            # Update last request time
-            self.last_request_time = time.time()
+            print(f"[DEBUG MW API] Response status for '{word}': {response.status_code}")
             
             if response.status_code == 200:
-                # Parse the response
-                results = response.json()
+                data = response.json()
+                print(f"[DEBUG MW API] Response data type: {type(data)}, length: {len(data) if isinstance(data, list) else 'N/A'}")
                 
-                # Check if the word was found in the dictionary
-                is_valid = False
+                # Check if we got a valid dictionary entry (not just suggestions)
+                has_valid_definition = False
+                all_entries_are_abbreviations = True
                 
-                if results:
-                    # Check if we got a list of strings (suggestions) or actual entries
-                    if isinstance(results[0], str):
-                        # We got suggestions, not actual entries
+                if data and isinstance(data, list):
+                    for entry in data:
+                        if isinstance(entry, dict) and 'meta' in entry:
+                            print(f"[DEBUG MW API] Found dictionary entry with meta for '{word}'")
+                            # Check if this entry is an abbreviation
+                            functional_label = entry.get('fl', '').lower()
+                            
+                            print(f"[DEBUG MW API] Functional label for '{word}': {functional_label}")
+                            
+                            # Check if this is a valid non-abbreviation definition
+                            is_abbreviation_entry = ('abbr' in functional_label or 
+                                'abbreviation' in functional_label or
+                                'acronym' in functional_label)
+                            
+                            # If we find at least one non-abbreviation entry, set flag
+                            if not is_abbreviation_entry:
+                                all_entries_are_abbreviations = False
+                                
+                                # Also check definitions for abbreviation indicators
+                                if 'def' in entry:
+                                    definition_text = json.dumps(entry['def']).lower()
+                                    print(f"[DEBUG MW API] Definition contains abbreviation indicators? {'yes' if ('abbreviation' in definition_text or 'abbr.' in definition_text or 'acronym' in definition_text) else 'no'}")
+                                    if ('abbreviation' in definition_text or
+                                        'abbr.' in definition_text or
+                                        'acronym' in definition_text):
+                                        # Skip this definition if it mentions abbreviation
+                                        continue
+                                
+                                # Mark as valid if we found a non-abbreviation definition
+                                has_valid_definition = True
+                                print(f"[DEBUG MW API] Found valid non-abbreviation definition for '{word}'")
+                        
+                    # If no dictionary entries found, it's not a valid word
+                    if not has_valid_definition:
+                        print(f"[DEBUG MW API] No valid definitions found for '{word}'")
+                        is_valid = False
+                    elif all_entries_are_abbreviations:
+                        # If all entries are abbreviations, mark as invalid
+                        print(f"[DEBUG MW API] '{word}' only has abbreviation definitions")
                         is_valid = False
                     else:
-                        # We got actual dictionary entries - word is valid
+                        # Word has at least one valid non-abbreviation definition
+                        print(f"[DEBUG MW API] '{word}' has valid non-abbreviation definitions")
                         is_valid = True
+                else:
+                    print(f"[DEBUG MW API] Received suggestions or empty response for '{word}'")
+                    is_valid = False
                 
-                # Cache the result
-                self.word_cache[word] = is_valid
+                print(f"[DEBUG MW API] Final validation result for '{word}': {is_valid}")
                 
+                # Cache the validation result
+                self._cache_validation(word, is_valid)
+                cached_validations[word] = is_valid
                 return is_valid
-            else:
-                print(f"API Error: Status code {response.status_code}")
-                # Fall back to local validation if API fails
-                return self._fallback_validation(word)
-                
+            
+            # API call failed
+            print(f"[DEBUG MW API] API call failed for '{word}' with status code {response.status_code}")
+            return None
+            
         except Exception as e:
-            print(f"Error validating word through {self.name}: {str(e)}")
-            # Fall back to local validation in case of error
-            return self._fallback_validation(word)
-    
-    def validate_words(self, words):
-        """
-        Validate a list of words.
+            # Handle any errors (timeout, connection issues, etc.)
+            print(f"[DEBUG MW API] Error for '{word}': {str(e)}")
+            return None
 
-        Args:
-            words (list): List of words to validate
-
-        Returns:
-            list: List of valid words
+    def fetch_definition(self, word):
         """
-        return [word for word in words if self.validate_word(word)]
-    
-    def get_definition(self, word):
-        """
-        Get the definition of a word from the selected Merriam-Webster dictionary.
-
+        Fetch definition for a word from Merriam-Webster dictionary
+        
         Args:
             word (str): The word to look up
-
+            
         Returns:
-            str: The definition of the word, or None if not found
+            str: The definition of the word, or None if not found or API fails
         """
-        # Normalize word
+        # Convert to lowercase for consistency
         word = word.lower().strip()
         
-        # If no API key is set, return None
+        # First, check if we have a cached definition
+        definition = self._get_cached_definition(word)
+        if definition:
+            return definition
+            
+        # If not in cache and no API key, return None
         if not self.api_key:
-            print(f"Warning: {self.name} API key not found. Please set the appropriate environment variable.")
             return None
-        
+            
         try:
-            # Implement rate limiting
-            self._respect_rate_limit()
-            
-            # Construct the API URL
-            url = f"{self.base_url}/{word}?key={self.api_key}"
-            
-            # Make the API request
-            response = requests.get(url)
-            
-            # Update last request time
-            self.last_request_time = time.time()
+            url = f"{self.base_url}{quote_plus(word)}?key={self.api_key}"
+            response = requests.get(url, timeout=5)
             
             if response.status_code == 200:
-                # Parse the response
-                results = response.json()
+                data = response.json()
                 
-                # If no results or just suggestions, return None
-                if not results or isinstance(results[0], str):
-                    return None
-                
-                # Extract the definition based on dictionary type
-                if self.dictionary_type == LEARNERS:
-                    # Learner's dictionary format
-                    first_entry = results[0]
-                    if 'shortdef' in first_entry and first_entry['shortdef']:
-                        return first_entry['shortdef'][0]
-                else:
-                    # Collegiate dictionary format
-                    first_entry = results[0]
-                    if 'shortdef' in first_entry and first_entry['shortdef']:
-                        return first_entry['shortdef'][0]
-                
-                return None
-            else:
-                print(f"API Error: Status code {response.status_code}")
-                return None
-                
-        except Exception as e:
-            print(f"Error getting definition through {self.name}: {str(e)}")
+                # Process the dictionary data
+                if data and isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict) and 'shortdef' in data[0]:
+                    # Get the first definition
+                    definitions = data[0]['shortdef']
+                    if definitions:
+                        # Join multiple definitions
+                        definition = "; ".join(definitions)
+                        
+                        # Get part of speech if available
+                        part_of_speech = data[0].get('fl', '')
+                        formatted_def = f"{part_of_speech}: {definition}" if part_of_speech else definition
+                        
+                        # Cache the definition locally
+                        self._cache_definition(word, formatted_def)
+                        return formatted_def
+            
+            # API failed or no definition found
             return None
-    
-    def get_dictionary_info(self):
+            
+        except Exception as e:
+            # Handle any errors
+            print(f"Merriam-Webster API error for definition of '{word}': {str(e)}")
+            return None
+
+    def _get_cached_validation(self, word):
         """
-        Get information about the currently selected dictionary.
-        
-        Returns:
-            dict: Dictionary with type and name information
-        """
-        return {
-            "type": self.dictionary_type,
-            "name": self.name,
-            "has_api_key": bool(self.api_key)
-        }
-    
-    def _respect_rate_limit(self):
-        """
-        Ensure we don't exceed API rate limits by adding delays if needed
-        """
-        elapsed = time.time() - self.last_request_time
-        if elapsed < self.min_request_interval:
-            # Sleep to respect rate limiting
-            time.sleep(self.min_request_interval - elapsed)
-    
-    def _fallback_validation(self, word):
-        """
-        Fallback method for word validation when the API is unavailable
-        Uses common word-length heuristics and common English words
+        Get cached validation result from SQLite database
         
         Args:
-            word (str): The word to validate
+            word (str): The word to check
             
         Returns:
-            bool: True if the word is likely valid, False otherwise
+            bool or None: True if valid, False if invalid, None if not cached
         """
-        # Very simple fallback: consider common word lengths and patterns
-        if len(word) < 2:  # Only 'a' and 'i' are valid 1-letter English words
-            return word in ['a', 'i']
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "definitions.db")
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT is_valid FROM merriam_webster_definitions WHERE word = ?", (word,))
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result is not None:
+                return bool(result[0])
+            return None
+        except Exception:
+            return None
+
+    def _get_cached_definition(self, word):
+        """
+        Get cached definition from SQLite database
         
-        # For longer words, check against a small set of common English words
-        common_words = {
-            "the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
-            "for", "not", "on", "with", "he", "as", "you", "do", "at", "this",
-            "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
-            "an", "will", "my", "one", "all", "would", "there", "their", "what",
-            "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
-            "game", "play", "word", "letter", "score", "board", "tiles", "win"
-        }
+        Args:
+            word (str): The word to look up
+            
+        Returns:
+            str or None: Definition if found, None otherwise
+        """
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "definitions.db")
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT definition FROM merriam_webster_definitions WHERE word = ?", (word,))
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result:
+                return result[0]
+            return None
+        except Exception:
+            return None
+
+    def _cache_validation(self, word, is_valid):
+        """
+        Cache validation result in SQLite database
         
-        return word.lower() in common_words
+        Args:
+            word (str): The word to cache
+            is_valid (bool): Whether the word is valid
+        """
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "definitions.db")
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Insert or replace the validation result
+            cursor.execute("""
+                INSERT OR REPLACE INTO merriam_webster_definitions (word, is_valid)
+                VALUES (?, ?)
+            """, (word, is_valid))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Error caching validation: {e}")
+
+    def _cache_definition(self, word, definition):
+        """
+        Cache definition in SQLite database
+        
+        Args:
+            word (str): The word to cache
+            definition (str): The definition to cache
+        """
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "definitions.db")
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Insert or replace the definition
+            cursor.execute("""
+                INSERT OR REPLACE INTO merriam_webster_definitions (word, definition, is_valid)
+                VALUES (?, ?, 1)
+            """, (word, definition))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Error caching definition: {e}")
+
+# Create a global instance with default settings
+merriam_webster = MerriamWebsterAPI()

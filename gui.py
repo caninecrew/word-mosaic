@@ -167,10 +167,16 @@ class WordMosaicApp(QMainWindow):
         label.setFont(QFont("Arial", 12))
         letter_bank_layout.addWidget(label)
         
-        # Letter bank display frame
-        self.letter_bank_frame = QFrame()
-        self.letter_bank_frame.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        self.letter_bank_frame.setStyleSheet("background-color: #f0f0f0;")
+        # Track tiles placed in the current turn
+        self.current_turn_tiles = []
+        
+        # Track game over state
+        self.is_game_over = False
+        
+        # Create central widget and layout
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
         
         # Will use flow layout for tiles - we'll create a layout in the update method
         self.letter_bank_layout = QHBoxLayout(self.letter_bank_frame)
@@ -328,7 +334,30 @@ class WordMosaicApp(QMainWindow):
         
         A word game inspired by Scrabble, but with a twist.
         
-        Created with ♥
+        # Placeholder for definitions content
+        self.definitions_content = QLabel("")
+        self.definitions_content.setFont(QFont('Arial', 10))
+        self.definitions_content.setWordWrap(True)
+        definitions_layout.addWidget(self.definitions_content)
+        
+        # Add definitions widget to main layout
+        self.layout.addWidget(definitions_widget)
+    
+    def clear_definitions(self):
+        """
+        Clear the definitions display completely.
+        This ensures all definitions are removed from the display.
+        """
+        print("[DEBUG] In clear_definitions(): Attempting to clear definitions display")
+        # Try multiple approaches to ensure the display is cleared
+        self.definitions_content.clear()
+        self.definitions_content.setText("")
+        
+        # Force a repaint to ensure the UI is updated
+        self.definitions_content.repaint()
+        print("[DEBUG] Definitions display should now be empty")
+    
+    def refresh_letter_bank(self):
         """
         QMessageBox.information(self, "About", about_text)
     
@@ -350,7 +379,47 @@ class WordMosaicApp(QMainWindow):
         
         You can change dictionaries in Options > Dictionary menu.
         """
-        QMessageBox.information(self, "Dictionary Status", status_text)
+        Handle letter placement on the board.
+        Places the selected letter on the specified cell and updates the game state.
+        """
+        if not hasattr(self, 'selected_letter') or not self.selected_letter:
+            self.status_bar.showMessage("Please select a letter first")
+            return
+
+        try:
+            # Try to place the letter using your game logic
+            self.game_board.place_letter(self.selected_letter, row, col)
+
+            # Update the visual board with the letter, using consistent styling
+            self.cells[(row, col)].setText(self.selected_letter.upper())
+            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc;")
+            self.cells[(row, col)].letter_display.setFont(QFont('Arial', 22, QFont.Bold))  # Match DraggableTile font size
+            
+            # Set point value for the letter
+            point_value = LetterBank.LETTER_VALUES.get(self.selected_letter.lower(), 0)
+            self.cells[(row, col)].setPointValue(point_value)
+
+            # Mark special tile as occupied if applicable
+            if (row, col) in self.game_board.special_tiles:
+                self.game_board.special_tiles_occupied[(row, col)] = True
+
+            # Remove from player's hand
+            self.player_hand.remove_letter(self.selected_letter)
+
+            # Add to current turn tiles
+            self.current_turn_tiles.append((row, col))
+
+            # Clear selection
+            self.selected_letter = None
+
+            # Update letter bank display
+            self.refresh_letter_bank()
+
+            # Update status
+            self.status_bar.showMessage(f"Placed letter at position ({row}, {col})")
+
+        except ValueError as e:
+            self.status_bar.showMessage(f"Invalid placement: {str(e)}")
     
     def change_dictionary(self, dict_type):
         """Change the dictionary being used."""
@@ -370,5 +439,295 @@ class WordMosaicApp(QMainWindow):
         self.dictionary_label.setText(f"Dictionary: {info['name']}")
         self.show_status(f"Switched to {info['name']}")
 
-# Keep the legacy class name as an alias for backward compatibility
-GUI = WordMosaicApp
+            # Try to place the letter using game logic
+            self.game_board.place_letter(letter, row, col)
+
+            # Update the visual board with the letter, using consistent styling
+            self.cells[(row, col)].setText(letter.upper())
+            self.cells[(row, col)].setStyleSheet("background-color: #ffffcc;")
+            self.cells[(row, col)].letter_display.setFont(QFont('Arial', 22, QFont.Bold))  # Match DraggableTile font size
+            
+            # Set point value for the letter
+            point_value = LetterBank.LETTER_VALUES.get(letter.lower(), 0)
+            self.cells[(row, col)].setPointValue(point_value)
+
+            # Mark special tile as occupied if applicable
+            if (row, col) in self.game_board.special_tiles:
+                self.game_board.special_tiles_occupied[(row, col)] = True
+
+            # Remove the original letter from player's hand (whether blank '0' or regular)
+            self.player_hand.remove_letter(original_letter)
+
+            # Add to current turn tiles
+            self.current_turn_tiles.append((row, col))
+
+            # Update letter bank display
+            self.refresh_letter_bank()
+
+            # Update status
+            self.status_bar.showMessage(f"Placed letter at position ({row}, {col})")
+
+        except ValueError as e:
+            self.status_bar.showMessage(f"Invalid placement: {str(e)}")
+    
+    def submit_word(self):
+        """
+        Submit the current word and calculate the score.
+        Validates the word, updates the score, and replenishes the player's hand.
+        """
+        try:
+            print("[DEBUG] Starting word submission")
+            
+            # Clear all definitions immediately when submit button is clicked
+            print("[DEBUG] Clearing definitions display")
+            self.clear_definitions()
+            print("[DEBUG] Definitions display cleared")
+            
+            # Get the words formed during the turn
+            words_formed = self.game_board.get_all_words()
+            print(f"[DEBUG] Words formed: {len(words_formed)} word(s)")
+
+            if not words_formed:
+                self.status_bar.showMessage("No valid words formed")
+                return
+
+            # Track letters to return to player's hand if invalid words are found
+            letters_to_return = []
+            positions_to_clear = []
+            valid_words = []
+
+            # Validate word positions and check if words are valid
+            for word_data in words_formed:
+                word, positions = word_data
+                print(f"[DEBUG] Validating word: {word}")
+
+                # Convert word to uppercase for validation or display
+                word_upper = word.upper()
+
+                if not self.game_board.validate_word_positions(word, positions):
+                    self.status_bar.showMessage(f"Invalid word placement: {word_upper}")
+                    return
+
+                # Validate using Merriam-Webster API
+                if not self.game_board.validate_word(word):
+                    print(f"[DEBUG] Invalid word detected: {word_upper}")
+                    self.status_bar.showMessage(f"Invalid word: {word_upper}. Tiles returned to your hand.")
+                    
+                    # Get letters at positions from current turn only
+                    for row, col in positions:
+                        if (row, col) in self.current_turn_tiles:
+                            letter = self.game_board.get_letter(row, col)
+                            if letter:
+                                letters_to_return.append(letter)
+                                positions_to_clear.append((row, col))
+                else:
+                    print(f"[DEBUG] Valid word found: {word_upper}")
+                    valid_words.append(word_data)
+
+            # Clear invalid word positions from board (only current turn tiles)
+            for row, col in positions_to_clear:
+                self.game_board.clear_position(row, col)
+                if (row, col) in self.current_turn_tiles:
+                    self.current_turn_tiles.remove((row, col))
+
+            # Return letters to player's hand
+            for letter in letters_to_return:
+                self.player_hand.add_letter(letter.lower())  # Use lowercase for consistency
+
+            # If letters were returned to the player's hand, refresh display and return
+            if letters_to_return:
+                print(f"[DEBUG] Returning {len(letters_to_return)} invalid letters to player's hand")
+                self.refresh_board()
+                self.refresh_letter_bank()
+                return
+
+            # If no valid words remain after clearing invalid tiles, refresh display and return
+            if not valid_words:
+                print("[DEBUG] No valid words remained after validation")
+                self.refresh_board()
+                self.refresh_letter_bank()
+                return
+
+            # Calculate the turn score based on valid words only
+            print(f"[DEBUG] Calculating turn score for {len(valid_words)} valid word(s)")
+            turn_score = self.game_board.calculate_turn_score(valid_words)
+            
+            # Update total score
+            self.score += turn_score
+            print(f"[DEBUG] Score updated: {self.score}")
+            self.score_value.setText(str(self.score))
+            
+            # Get definitions for the words in this turn only
+            from dictionary_api import format_definitions
+            word_list = [word for word, _ in valid_words]
+            print(f"[DEBUG] Getting definitions for: {word_list}")
+            formatted_definitions = format_definitions(word_list)
+            
+            # Set new definitions with header indicating these are from the current turn
+            print("[DEBUG] Setting new definitions in display")
+            current_turn_text = f"<p><b>Current Turn Words:</b></p>{formatted_definitions}"
+            self.definitions_content.setText(current_turn_text)
+            self.definitions_content.setTextFormat(Qt.RichText)
+            print("[DEBUG] Definitions display updated")
+
+            # Replenish player's hand, accounting for returned tiles
+            print(f"[DEBUG] Replenishing player's hand")
+            
+            # Calculate how many new letters needed after accounting for returned tiles
+            needed_letters = max(0, len(self.current_turn_tiles) - len(letters_to_return))
+            letters_added = self.player_hand.refill(needed_letters)
+            
+            print(f"[DEBUG] Letters added to player's hand: {letters_added}")
+
+            # Update letter bank display
+            print("[DEBUG] Refreshing letter bank display")
+            self.refresh_letter_bank()
+
+            # Update the board and status
+            print("[DEBUG] Refreshing board display")
+            self.refresh_board()
+            
+            # Clear the current turn tiles list since the turn is complete
+            self.current_turn_tiles = []
+            
+            # Update status message
+            self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
+            print("[DEBUG] Word submission completed successfully")
+            
+            # Check if the game is over after this turn
+            if self.check_game_over():
+                print("[DEBUG] Game over detected!")
+                self.show_game_over_dialog()
+
+        except Exception as e:
+            print(f"[ERROR] Error submitting word: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            self.status_bar.showMessage(f"Error submitting word: {str(e)}")
+
+    def shuffle_letters(self):
+        """
+        Shuffle the player's letter bank.
+        Updates the letter bank display and shows a status message.
+        """
+        self.player_hand.shuffle_letters()
+        self.refresh_letter_bank()
+        self.status_bar.showMessage("Letters shuffled")
+
+    def check_game_over(self):
+        """
+        Check if the game is over.
+        
+        Game is over when:
+        1. The letter bank is empty (no more letters to draw)
+        2. AND there are no valid placements for any letters in the player's hand
+        
+        Returns:
+            bool: True if the game is over, False otherwise
+        """
+        # If already in game over state, return True
+        if self.is_game_over:
+            return True
+            
+        # First check if letter bank is empty
+        if not self.letter_bank.bank_empty():
+            return False  # Still has letters in the bank
+        
+        # Get the player's current letters
+        player_letters = self.player_hand.letter_order
+        
+        if not player_letters:
+            # No letters in hand and bank is empty - game over
+            self.is_game_over = True
+            return True
+            
+        # Check if there are any valid placements for the player's letters
+        has_valid_moves = False
+        for letter in player_letters:
+            # Check all potentially valid positions
+            for row in range(self.game_board.rows):
+                for col in range(self.game_board.cols):
+                    if not self.game_board.is_occupied(row, col) and self.game_board.has_adjacent_letter(row, col):
+                        # This is a valid position to place a letter - check if it forms valid words
+                        try:
+                            # Temporarily place the letter
+                            self.game_board.place_letter(letter, row, col)
+                            
+                            # Get all words formed by this placement
+                            words_formed = self.game_board.get_all_words()
+                            
+                            # Check if any of the words formed are valid
+                            for word, _ in words_formed:
+                                if self.game_board.validate_word(word):
+                                    has_valid_moves = True
+                                    break
+                                    
+                            # Remove the temporary letter
+                            self.game_board.clear_position(row, col)
+                            
+                            if has_valid_moves:
+                                return False  # Found a valid move, game is not over
+                        except ValueError:
+                            # Invalid placement, continue checking other positions
+                            continue
+                            
+        # No valid moves found and letter bank is empty - game over
+        self.is_game_over = True
+        return True
+
+    def show_game_over_dialog(self):
+        """
+        Show a game over dialog with the final score and statistics.
+        """
+        from PyQt5.QtWidgets import QMessageBox
+        
+        # Calculate board coverage
+        board_coverage = round(self.game_board.calculate_coverage(), 1)
+        
+        # Get all words formed on the board
+        all_words = self.game_board.get_all_words()
+        word_count = len(all_words)
+        
+        # Calculate longest word
+        longest_word = ""
+        for word, _ in all_words:
+            if len(word) > len(longest_word):
+                longest_word = word
+        
+        # Create message box
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Game Over")
+        
+        # Set the game over message with statistics
+        game_over_html = f"""
+        <h2>Game Over!</h2>
+        <p>No more moves available.</p>
+        <h3>Final Score: {self.score}</h3>
+        <p><b>Statistics:</b></p>
+        <ul>
+            <li>Board Coverage: {board_coverage}%</li>
+            <li>Words Placed: {word_count}</li>
+            <li>Longest Word: {longest_word.upper()} ({len(longest_word)} letters)</li>
+        </ul>
+        <p>Thanks for playing Word Mosaic!</p>
+        """
+        
+        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setText(game_over_html)
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec_()
+        
+        # Update status bar
+        self.status_bar.showMessage(f"Game Over! Final Score: {self.score}")
+        
+        # Disable buttons
+        for button in self.findChildren(QPushButton):
+            if button.text() in ["Submit Word", "Shuffle Letters"]:
+                button.setEnabled(False)
+
+# Main application entry point
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = WordMosaicApp()
+    window.show()
+    sys.exit(app.exec_())
