@@ -77,13 +77,13 @@ class MerriamWebsterAPI:
 
     def is_valid_word(self, word):
         """
-        Check if a word exists in the Merriam-Webster dictionary
+        Check if a word exists in the Merriam-Webster dictionary and is not an abbreviation
         
         Args:
             word (str): The word to validate
             
         Returns:
-            bool: True if the word is valid, False otherwise
+            bool: True if the word is valid and not an abbreviation, False otherwise
         """
         # Convert to lowercase for consistency
         word = word.lower().strip()
@@ -112,9 +112,37 @@ class MerriamWebsterAPI:
                 
                 # Check if we got a valid dictionary entry (not just suggestions)
                 is_valid = False
+                is_abbreviation = False
+                
                 if data and isinstance(data, list):
-                    # If the response contains dictionary objects with 'meta' field, it's a valid word
-                    is_valid = any('meta' in entry for entry in data if isinstance(entry, dict))
+                    for entry in data:
+                        if isinstance(entry, dict) and 'meta' in entry:
+                            # Check if this entry is an abbreviation
+                            # Look for abbreviation indicators in functional labels or part of speech
+                            functional_label = entry.get('fl', '').lower()
+                            
+                            # Check various abbreviation indicators
+                            if ('abbr' in functional_label or 
+                                'abbreviation' in functional_label or
+                                'acronym' in functional_label):
+                                is_abbreviation = True
+                                break
+                            
+                            # Also check definitions for abbreviation indicators
+                            if 'def' in entry:
+                                definition_text = json.dumps(entry['def']).lower()
+                                if ('abbreviation' in definition_text or
+                                    'abbr.' in definition_text or
+                                    'acronym' in definition_text):
+                                    is_abbreviation = True
+                                    break
+                            
+                            # If we found a valid entry and it's not an abbreviation, mark as valid
+                            is_valid = True
+                
+                # If it's an abbreviation, mark as invalid regardless of other factors
+                if is_abbreviation:
+                    is_valid = False
                 
                 # Cache the validation result
                 self._cache_validation(word, is_valid)
