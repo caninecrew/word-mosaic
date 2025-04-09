@@ -475,6 +475,14 @@ class WordMosaicApp(QMainWindow):
         # Add definitions widget to main layout
         self.layout.addWidget(definitions_widget)
     
+    def clear_definitions(self):
+        """
+        Clear the definitions display completely.
+        This ensures all definitions are removed from the display.
+        """
+        self.definitions_content.setText("")
+        self.definitions_content.clear()  # Use both methods to ensure clearing works
+    
     def refresh_letter_bank(self):
         """
         Refresh the letter bank display.
@@ -687,7 +695,7 @@ class WordMosaicApp(QMainWindow):
             print("=== Starting word submission ===")
             
             # Clear all definitions immediately when submit button is clicked
-            self.definitions_content.clear()
+            self.clear_definitions()
             
             # Get the words formed during the turn
             words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
