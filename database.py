@@ -97,9 +97,37 @@ def add_definition_column():
     finally:
         conn.close()
 
+def create_definitions_db(db_file="definitions.db"):
+    """
+    Create the definitions database if it doesn't exist.
+
+    Args:
+        db_file (str): Path to the SQLite database file to create.
+    """
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+
+    # Create the definitions table
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS definitions (
+            word TEXT PRIMARY KEY,
+            definition TEXT,
+            part_of_speech TEXT,
+            is_valid BOOLEAN,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    conn.commit()
+    conn.close()
+
 # Run if this file is executed directly
 if __name__ == "__main__":
     # Ensure the 'definition' column exists
     add_definition_column()
     create_database()
+    # Ensure the definitions database exists
+    create_definitions_db()
 
