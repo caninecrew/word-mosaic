@@ -480,8 +480,14 @@ class WordMosaicApp(QMainWindow):
         Clear the definitions display completely.
         This ensures all definitions are removed from the display.
         """
+        print("[DEBUG] In clear_definitions(): Attempting to clear definitions display")
+        # Try multiple approaches to ensure the display is cleared
+        self.definitions_content.clear()
         self.definitions_content.setText("")
-        self.definitions_content.clear()  # Use both methods to ensure clearing works
+        
+        # Force a repaint to ensure the UI is updated
+        self.definitions_content.repaint()
+        print("[DEBUG] Definitions display should now be empty")
     
     def refresh_letter_bank(self):
         """
@@ -692,14 +698,16 @@ class WordMosaicApp(QMainWindow):
         Validates the word, updates the score, and replenishes the player's hand.
         """
         try:
-            print("=== Starting word submission ===")
+            print("[DEBUG] Starting word submission")
             
             # Clear all definitions immediately when submit button is clicked
+            print("[DEBUG] Clearing definitions display")
             self.clear_definitions()
+            print("[DEBUG] Definitions display cleared")
             
             # Get the words formed during the turn
-            words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
-            print(f"Words formed: {words_formed}")  # Debugging statement
+            words_formed = self.game_board.get_all_words()
+            print(f"[DEBUG] Words formed: {len(words_formed)} word(s)")
 
             if not words_formed:
                 self.status_bar.showMessage("No valid words formed")
@@ -713,17 +721,10 @@ class WordMosaicApp(QMainWindow):
             # Validate word positions and check if words are valid
             for word_data in words_formed:
                 word, positions = word_data
-                print(f"Validating word: {word}, positions: {positions}")  # Debugging statement
-
-                # Ensure 'word' is a string before calling .upper()
-                if not isinstance(word, str):
-                    raise TypeError(f"Expected 'word' to be a string, but got {type(word).__name__}: {word}")
+                print(f"[DEBUG] Validating word: {word}")
 
                 # Convert word to uppercase for validation or display
                 word_upper = word.upper()
-
-                print(f"Submitting word: {word_upper}, positions: {positions}")  # Debugging statement
-                print(f"Current score before submission: {self.score}")  # Debugging statement
 
                 if not self.game_board.validate_word_positions(word, positions):
                     self.status_bar.showMessage(f"Invalid word placement: {word_upper}")
@@ -731,7 +732,7 @@ class WordMosaicApp(QMainWindow):
 
                 # Validate using Merriam-Webster API
                 if not self.game_board.validate_word(word):
-                    print(f"Invalid word detected: {word_upper}")
+                    print(f"[DEBUG] Invalid word detected: {word_upper}")
                     self.status_bar.showMessage(f"Invalid word: {word_upper}. Tiles returned to your hand.")
                     
                     # Get letters at positions from current turn only
@@ -742,6 +743,7 @@ class WordMosaicApp(QMainWindow):
                                 letters_to_return.append(letter)
                                 positions_to_clear.append((row, col))
                 else:
+                    print(f"[DEBUG] Valid word found: {word_upper}")
                     valid_words.append(word_data)
 
             # Clear invalid word positions from board (only current turn tiles)
@@ -756,71 +758,71 @@ class WordMosaicApp(QMainWindow):
 
             # If letters were returned to the player's hand, refresh display and return
             if letters_to_return:
+                print(f"[DEBUG] Returning {len(letters_to_return)} invalid letters to player's hand")
                 self.refresh_board()
                 self.refresh_letter_bank()
                 return
 
             # If no valid words remain after clearing invalid tiles, refresh display and return
             if not valid_words:
+                print("[DEBUG] No valid words remained after validation")
                 self.refresh_board()
                 self.refresh_letter_bank()
                 return
 
             # Calculate the turn score based on valid words only
-            print("Calculating turn score...")
+            print(f"[DEBUG] Calculating turn score for {len(valid_words)} valid word(s)")
             turn_score = self.game_board.calculate_turn_score(valid_words)
-            print(f"Turn score calculated: {turn_score}")
             
             # Update total score
             self.score += turn_score
-            print(f"Updated total score: {self.score}")
+            print(f"[DEBUG] Score updated: {self.score}")
             self.score_value.setText(str(self.score))
-            print(f"Score display updated to: {self.score_value.text()}")
             
             # Get definitions for the words in this turn only
             from dictionary_api import format_definitions
             word_list = [word for word, _ in valid_words]
+            print(f"[DEBUG] Getting definitions for: {word_list}")
             formatted_definitions = format_definitions(word_list)
             
             # Set new definitions with header indicating these are from the current turn
+            print("[DEBUG] Setting new definitions in display")
             current_turn_text = f"<p><b>Current Turn Words:</b></p>{formatted_definitions}"
             self.definitions_content.setText(current_turn_text)
             self.definitions_content.setTextFormat(Qt.RichText)
+            print("[DEBUG] Definitions display updated")
 
             # Replenish player's hand, accounting for returned tiles
-            print(f"Replenishing player's hand with {len(self.current_turn_tiles)} new letters...")
-            print(f"Player hand before refill: {self.player_hand.letter_order}")
+            print(f"[DEBUG] Replenishing player's hand")
             
             # Calculate how many new letters needed after accounting for returned tiles
             needed_letters = max(0, len(self.current_turn_tiles) - len(letters_to_return))
             letters_added = self.player_hand.refill(needed_letters)
             
-            print(f"Player hand after refill: {self.player_hand.letter_order}")
-            print(f"Letters added: {letters_added}")
+            print(f"[DEBUG] Letters added to player's hand: {letters_added}")
 
             # Update letter bank display
-            print("Refreshing letter bank display...")
+            print("[DEBUG] Refreshing letter bank display")
             self.refresh_letter_bank()
 
             # Update the board and status
-            print("Refreshing board display...")
+            print("[DEBUG] Refreshing board display")
             self.refresh_board()
             
             # Clear the current turn tiles list since the turn is complete
             self.current_turn_tiles = []
             
             # Update status message
-            print(f"Setting status message: Turn completed! Score: {turn_score}")
             self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
-            print("=== Word submission completed ===")
+            print("[DEBUG] Word submission completed successfully")
             
             # Check if the game is over after this turn
             if self.check_game_over():
-                print("Game over detected!")
+                print("[DEBUG] Game over detected!")
                 self.show_game_over_dialog()
 
         except Exception as e:
-            print(f"Error submitting word: {str(e)}")
+            print(f"[ERROR] Error submitting word: {str(e)}")
             import traceback
             traceback.print_exc()
             self.status_bar.showMessage(f"Error submitting word: {str(e)}")

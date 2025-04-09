@@ -33,7 +33,8 @@ class WordValidator:
             "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
             "an", "will", "my", "one", "all", "would", "there", "their", "what",
             "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
-            "game", "play", "word", "letter", "score", "board", "tiles", "win"
+            "game", "play", "word", "letter", "score", "board", "tiles", "win",
+            "dare", "date", "data", "dark", "dash", "darn", "dart"  # Added additional common d-words
         ]
         self.cursor.executemany("INSERT INTO dictionary VALUES (?)", [(w,) for w in common_words])
         self.conn.commit()
@@ -48,8 +49,11 @@ class WordValidator:
         Returns:
             bool: True if the word is valid, False otherwise
         """
+        print(f"[DEBUG VALIDATOR] Validating word: '{word}'")
+        
         # First try Merriam-Webster API
         api_result = merriam_webster.is_valid_word(word.lower())
+        print(f"[DEBUG VALIDATOR] Merriam-Webster API result for '{word}': {api_result}")
         
         # If API provides a definite answer, return it
         if api_result is not None:
@@ -57,7 +61,10 @@ class WordValidator:
         
         # Fallback to local database
         self.cursor.execute("SELECT 1 FROM dictionary WHERE word = ?", (word.lower(),))
-        return self.cursor.fetchone() is not None
+        db_result = self.cursor.fetchone() is not None
+        print(f"[DEBUG VALIDATOR] Local dictionary result for '{word}': {db_result}")
+        
+        return db_result
 
     def validate_words(self, words):
         """

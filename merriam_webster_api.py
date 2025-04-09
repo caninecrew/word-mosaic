@@ -88,61 +88,90 @@ class MerriamWebsterAPI:
         # Convert to lowercase for consistency
         word = word.lower().strip()
         
+        print(f"[DEBUG MW API] Checking if '{word}' is valid")
+        
         # Return from cache if available
         if word in cached_validations:
+            print(f"[DEBUG MW API] Found '{word}' in cache: {cached_validations[word]}")
             return cached_validations[word]
         
         # First, try the local SQLite database for cached validation
         is_valid = self._get_cached_validation(word)
         if is_valid is not None:
+            print(f"[DEBUG MW API] Found '{word}' in local DB cache: {is_valid}")
             cached_validations[word] = is_valid
             return is_valid
         
         # If not in local cache, try Merriam-Webster API
         if not self.api_key:
             # No API key available, return None to indicate fallback needed
+            print(f"[DEBUG MW API] No API key for '{word}', returning None")
             return None
             
         try:
             url = f"{self.base_url}{quote_plus(word)}?key={self.api_key}"
+            print(f"[DEBUG MW API] Requesting URL for '{word}': {url}")
             response = requests.get(url, timeout=5)
+            
+            print(f"[DEBUG MW API] Response status for '{word}': {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()
+                print(f"[DEBUG MW API] Response data type: {type(data)}, length: {len(data) if isinstance(data, list) else 'N/A'}")
                 
                 # Check if we got a valid dictionary entry (not just suggestions)
-                is_valid = False
-                is_abbreviation = False
+                has_valid_definition = False
+                all_entries_are_abbreviations = True
                 
                 if data and isinstance(data, list):
                     for entry in data:
                         if isinstance(entry, dict) and 'meta' in entry:
+                            print(f"[DEBUG MW API] Found dictionary entry with meta for '{word}'")
                             # Check if this entry is an abbreviation
-                            # Look for abbreviation indicators in functional labels or part of speech
                             functional_label = entry.get('fl', '').lower()
                             
-                            # Check various abbreviation indicators
-                            if ('abbr' in functional_label or 
+                            print(f"[DEBUG MW API] Functional label for '{word}': {functional_label}")
+                            
+                            # Check if this is a valid non-abbreviation definition
+                            is_abbreviation_entry = ('abbr' in functional_label or 
                                 'abbreviation' in functional_label or
-                                'acronym' in functional_label):
-                                is_abbreviation = True
-                                break
+                                'acronym' in functional_label)
                             
-                            # Also check definitions for abbreviation indicators
-                            if 'def' in entry:
-                                definition_text = json.dumps(entry['def']).lower()
-                                if ('abbreviation' in definition_text or
-                                    'abbr.' in definition_text or
-                                    'acronym' in definition_text):
-                                    is_abbreviation = True
-                                    break
-                            
-                            # If we found a valid entry and it's not an abbreviation, mark as valid
-                            is_valid = True
-                
-                # If it's an abbreviation, mark as invalid regardless of other factors
-                if is_abbreviation:
+                            # If we find at least one non-abbreviation entry, set flag
+                            if not is_abbreviation_entry:
+                                all_entries_are_abbreviations = False
+                                
+                                # Also check definitions for abbreviation indicators
+                                if 'def' in entry:
+                                    definition_text = json.dumps(entry['def']).lower()
+                                    print(f"[DEBUG MW API] Definition contains abbreviation indicators? {'yes' if ('abbreviation' in definition_text or 'abbr.' in definition_text or 'acronym' in definition_text) else 'no'}")
+                                    if ('abbreviation' in definition_text or
+                                        'abbr.' in definition_text or
+                                        'acronym' in definition_text):
+                                        # Skip this definition if it mentions abbreviation
+                                        continue
+                                
+                                # Mark as valid if we found a non-abbreviation definition
+                                has_valid_definition = True
+                                print(f"[DEBUG MW API] Found valid non-abbreviation definition for '{word}'")
+                        
+                    # If no dictionary entries found, it's not a valid word
+                    if not has_valid_definition:
+                        print(f"[DEBUG MW API] No valid definitions found for '{word}'")
+                        is_valid = False
+                    elif all_entries_are_abbreviations:
+                        # If all entries are abbreviations, mark as invalid
+                        print(f"[DEBUG MW API] '{word}' only has abbreviation definitions")
+                        is_valid = False
+                    else:
+                        # Word has at least one valid non-abbreviation definition
+                        print(f"[DEBUG MW API] '{word}' has valid non-abbreviation definitions")
+                        is_valid = True
+                else:
+                    print(f"[DEBUG MW API] Received suggestions or empty response for '{word}'")
                     is_valid = False
+                
+                print(f"[DEBUG MW API] Final validation result for '{word}': {is_valid}")
                 
                 # Cache the validation result
                 self._cache_validation(word, is_valid)
@@ -150,11 +179,12 @@ class MerriamWebsterAPI:
                 return is_valid
             
             # API call failed
+            print(f"[DEBUG MW API] API call failed for '{word}' with status code {response.status_code}")
             return None
             
         except Exception as e:
             # Handle any errors (timeout, connection issues, etc.)
-            print(f"Merriam-Webster API error for '{word}': {str(e)}")
+            print(f"[DEBUG MW API] Error for '{word}': {str(e)}")
             return None
 
     def fetch_definition(self, word):
