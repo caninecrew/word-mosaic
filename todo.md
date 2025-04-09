@@ -11,6 +11,9 @@
 - [X] Implement 15x15 grid system
 - [X] Create letter bank with 20 randomized letters based on frequency distributions
 - [X] Develop word validation system
+  - [X] Use Merriam-Webster dictionary API to validate words
+  - [X] Return invalid word tiles to player's hand
+  - [X] Filter out abbreviations from valid words
 - [X] Implement placement rules:
   - [X] First word must cross center
   - [X] All new words must connect to existing mosaic
@@ -20,9 +23,11 @@
 ## 🎮 User Interface
 - [X] Design main game board layout
 - [X] Create letter bank display
-- [ ] Implement drag-and-drop letter placement
+- [X] Implement drag-and-drop letter placement
 - [X] Design score tracking display
 - [X] Add visual feedback for valid/invalid placements
+  - [X] Clear definitions when invalid words are played
+  - [X] Only remove current turn's tiles when a word is invalid
 - [X] Create game menu and controls
 
 ## 🎯 Scoring System
@@ -58,6 +63,8 @@
 
 ## 💻 Optional Future Features
 - [X] Add dictionary integration
+  - [X] Show definitions for played words
+  - [X] Implement Merriam-Webster API integration
 - [ ] Implement save/load functionality
 - [ ] Create difficulty levels
 - [ ] Add achievements system
