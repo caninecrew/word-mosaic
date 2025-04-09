@@ -31,6 +31,10 @@ def main():
     initialize_databases()
     app = QApplication(sys.argv)
     window = WordMosaicApp()
+    
+    # Clear definitions after each turn
+    window.clear_definitions()
+    
     window.show()
     sys.exit(app.exec_())
 
