@@ -2,14 +2,93 @@ import sys
 from PyQt5.QtWidgets import (
     QMainWindow, QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, 
     QHBoxLayout, QGridLayout, QFrame, QLineEdit, QMessageBox, QAction, 
-    QMenu, QMenuBar, QStatusBar, QRadioButton
+    QMenu, QMenuBar, QStatusBar, QRadioButton, QSizePolicy
 )
-from PyQt5.QtGui import QFont, QIcon, QKeySequence
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QFont, QIcon, QKeySequence, QDrag
+from PyQt5.QtCore import Qt, QSize, pyqtSignal, QMimeData, QPoint
 from board import Board
 from letter_bank import LetterBank
 from scoring import Scoring
 from merriam_webster_api import COLLEGIATE, LEARNERS
+
+class ClickableLabel(QLabel):
+    """
+    A QLabel that emits a signal when clicked.
+    """
+    clicked = pyqtSignal(int, int)
+
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self.row = None
+        self.col = None
+        self.setAcceptDrops(True)  # Enable drop events
+
+    def mousePressEvent(self, event):
+        if self.row is not None and self.col is not None:
+            self.clicked.emit(self.row, self.col)
+    
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.accept()
+        else:
+            event.ignore()
+            
+    def dropEvent(self, event):
+        if event.mimeData().hasText():
+            letter = event.mimeData().text()
+            event.accept()
+            if self.row is not None and self.col is not None:
+                self.clicked.emit(self.row, self.col)
+                # The letter will be handled by the parent widget's handle_cell_click
+
+class DraggableLetterLabel(QLabel):
+    """
+    A specialized QLabel for letters in the letter bank that can be dragged.
+    """
+    clicked = pyqtSignal(str)
+
+    def __init__(self, letter, value, parent=None):
+        super().__init__(letter, parent)
+        self.letter = letter
+        self.value = value
+        self.selected = False
+        self.setStyleSheet("background-color: #ffd700; border: 1px solid #c0c0c0; border-radius: 4px;")
+        self.setAlignment(Qt.AlignCenter)
+        self.setFont(QFont("Arial", 14, QFont.Bold))
+        self.setFixedSize(40, 40)
+        
+        # Add a small value indicator in the corner
+        if letter != '0':  # Don't show value for blank tiles
+            value_label = QLabel(str(value), self)
+            value_label.setAlignment(Qt.AlignRight | Qt.AlignBottom)
+            value_label.setFont(QFont("Arial", 7))
+            value_label.setGeometry(25, 25, 15, 15)
+            value_label.setStyleSheet("background-color: transparent; border: none;")
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit(self.letter)  # Emit clicked signal
+            
+            # Start drag operation
+            drag = QDrag(self)
+            mime_data = QMimeData()
+            mime_data.setText(self.letter)
+            drag.setMimeData(mime_data)
+            
+            # Optionally, set a pixmap for the drag operation
+            # pixmap = self.grab()
+            # drag.setPixmap(pixmap)
+            
+            # Execute the drag
+            drag.exec_(Qt.CopyAction)
+        
+    def set_selected(self, selected):
+        """Mark this letter as selected or not."""
+        self.selected = selected
+        if selected:
+            self.setStyleSheet("background-color: #ff9966; border: 2px solid #c0c0c0; border-radius: 4px;")
+        else:
+            self.setStyleSheet("background-color: #ffd700; border: 1px solid #c0c0c0; border-radius: 4px;")
 
 class WordMosaicApp(QMainWindow):
     """
@@ -24,6 +103,11 @@ class WordMosaicApp(QMainWindow):
         """
         super().__init__()
         self.game = game
+        
+        # Initialize game state
+        self.selected_letter = None  # Currently selected letter from the letter bank
+        self.current_turn_tiles = []  # Track tiles placed in the current turn
+        self.is_game_over = False
         
         # Set window properties
         self.setWindowTitle("Word Mosaic")
@@ -43,8 +127,8 @@ class WordMosaicApp(QMainWindow):
         self._create_top_frame()
         self._create_board_frame()
         self._create_letter_bank_frame()
-        self._create_word_entry_frame()
-        self._create_status_frame()
+        self._create_action_frame()  # Renamed from word_entry_frame
+        self._create_status_bar()  # Added status bar
         
         # Initialize letters for a new game
         self.update_board_display()
@@ -53,7 +137,6 @@ class WordMosaicApp(QMainWindow):
     
     def _create_menu(self):
         """Create the menu bar with game options."""
-        # Create menubar
         menubar = self.menuBar()
         
         # Game menu
@@ -136,26 +219,127 @@ class WordMosaicApp(QMainWindow):
         board_frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
         board_frame.setStyleSheet("background-color: #e0e0e0;")
         
+        # Use grid layout with fixed spacing
         board_layout = QGridLayout(board_frame)
-        board_layout.setSpacing(2)
+        board_layout.setSpacing(2)  # Equal spacing between cells
+        board_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Make the grid maintain equal spacing when resized
+        for i in range(self.game.board.rows):
+            board_layout.setColumnStretch(i, 1)
+            board_layout.setRowStretch(i, 1)
         
         # Create grid of cells for the board
         self.board_cells = []
-        for row in range(self.game.board.size):
+        for row in range(self.game.board.rows):
             cell_row = []
-            for col in range(self.game.board.size):
-                cell = QLabel()
-                cell.setFixedSize(40, 40)
+            for col in range(self.game.board.cols):
+                # Create a frame for each cell to contain letter and score
+                cell_frame = QFrame()
+                cell_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                cell_frame.setMinimumSize(40, 40)  # Minimum size for the cell
+                
+                # Get special tile info to set background color
+                special_tile = self.game.board.get_special_tile_multiplier(row, col)
+                if special_tile:
+                    if special_tile == "TW":
+                        cell_frame.setStyleSheet("background-color: #ff6666; border: 2px solid #c0c0c0; border-radius: 4px;")
+                    elif special_tile == "DW":
+                        cell_frame.setStyleSheet("background-color: #ff9999; border: 2px solid #c0c0c0; border-radius: 4px;")
+                    elif special_tile == "TL":
+                        cell_frame.setStyleSheet("background-color: #66b3ff; border: 2px solid #c0c0c0; border-radius: 4px;")
+                    elif special_tile == "DL":
+                        cell_frame.setStyleSheet("background-color: #99ccff; border: 2px solid #c0c0c0; border-radius: 4px;")
+                else:
+                    cell_frame.setStyleSheet("background-color: #ffffff; border: 2px solid #c0c0c0; border-radius: 4px;")
+                
+                # Use layout for each cell to position letter and score
+                cell_layout = QGridLayout(cell_frame)
+                cell_layout.setContentsMargins(2, 2, 2, 2)
+                cell_layout.setSpacing(0)
+                
+                # Create cell label for the letter
+                cell = ClickableLabel("")
                 cell.setAlignment(Qt.AlignCenter)
                 cell.setFont(QFont("Arial", 16, QFont.Bold))
-                cell.setStyleSheet(
-                    "background-color: #ffffff; border: 2px solid #c0c0c0; border-radius: 4px;"
-                )
-                board_layout.addWidget(cell, row, col)
+                cell.setStyleSheet("background-color: transparent; border: none;")
+                cell_layout.addWidget(cell, 0, 0, 1, 1, Qt.AlignCenter)
+                
+                # Add score label to the bottom right
+                score_label = QLabel("")
+                score_label.setAlignment(Qt.AlignRight | Qt.AlignBottom)
+                score_label.setFont(QFont("Arial", 7))
+                score_label.setStyleSheet("background-color: transparent; border: none;")
+                cell_layout.addWidget(score_label, 0, 0, 1, 1, Qt.AlignRight | Qt.AlignBottom)
+                
+                # Connect click event to handler
+                cell.clicked.connect(self.handle_cell_click)
+                cell.row = row
+                cell.col = col
+                
+                # Store both labels for later access
+                cell.score_label = score_label
+                
+                board_layout.addWidget(cell_frame, row, col)
                 cell_row.append(cell)
             self.board_cells.append(cell_row)
+        
+        # Make the board frame expand to fill available space
+        board_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             
         self.main_layout.addWidget(board_frame)
+        
+    def handle_cell_click(self, row, col):
+        """Handle click on a board cell."""
+        # If a letter is selected from the letter bank
+        if self.selected_letter:
+            # Try to place the letter on the board
+            try:
+                self.game.board.place_letter(self.selected_letter, row, col)
+                
+                # Remove the letter from the player's hand
+                self.game.letter_bank.use_letters(self.selected_letter)
+                
+                # Add to the current turn's tiles
+                self.current_turn_tiles.append((row, col, self.selected_letter))
+                
+                # Update displays
+                self.update_board_display()
+                self.update_letter_bank_display()
+                
+                # Reset selected letter
+                self.selected_letter = None
+                
+                # After placing, check for valid words
+                self._check_for_words()
+                
+                self.statusBar().showMessage(f"Letter placed at position ({row}, {col})")
+            except ValueError as e:
+                self.statusBar().showMessage(f"Cannot place letter: {str(e)}")
+        else:
+            # If no letter is selected, check if there's a letter on the cell that can be removed
+            letter_removed = False
+            for i, (r, c, letter) in enumerate(self.current_turn_tiles):
+                if r == row and c == col:
+                    # Remove the letter from the board
+                    self.game.board.clear_position(row, col)
+                    
+                    # Return the letter to the player's hand
+                    self.game.letter_bank.add_letter(letter)
+                    
+                    # Remove from current turn tiles
+                    self.current_turn_tiles.pop(i)
+                    
+                    # Update displays
+                    self.update_board_display()
+                    self.update_letter_bank_display()
+                    
+                    self.statusBar().showMessage(f"Letter removed from position ({row}, {col})")
+                    letter_removed = True
+                    break
+                    
+            if not letter_removed:
+                self.statusBar().showMessage("Select a letter first, then click on the board to place it")
     
     def _create_letter_bank_frame(self):
         """Create the frame that displays available letters."""
@@ -168,245 +352,239 @@ class WordMosaicApp(QMainWindow):
         label.setFont(QFont("Arial", 12))
         letter_bank_layout.addWidget(label)
         
-        # Track tiles placed in the current turn
-        self.current_turn_tiles = []
-        
-        # Track game over state
-        self.is_game_over = False
-        
-        # Create letter bank frame
+        # Create letter bank frame with a horizontal layout
         self.letter_bank_frame = QWidget()
         self.letter_bank_layout = QHBoxLayout(self.letter_bank_frame)
+        self.letter_bank_layout.setSpacing(5)
+        self.letter_bank_layout.setAlignment(Qt.AlignCenter)
         
         letter_bank_layout.addWidget(self.letter_bank_frame)
         self.main_layout.addWidget(letter_bank_widget)
     
-    def _create_word_entry_frame(self):
-        """Create the frame for entering words."""
-        word_entry_widget = QWidget()
-        word_entry_layout = QHBoxLayout(word_entry_widget)
-        word_entry_layout.setContentsMargins(0, 10, 0, 10)
+    def _create_action_frame(self):
+        """Create buttons for game actions like end turn and shuffle."""
+        action_widget = QWidget()
+        action_layout = QHBoxLayout(action_widget)
+        action_layout.setContentsMargins(0, 10, 0, 10)
+        action_layout.setAlignment(Qt.AlignCenter)
         
-        # Label
-        label = QLabel("Enter Word:")
-        label.setFont(QFont("Arial", 12))
-        word_entry_layout.addWidget(label)
+        # End Turn button
+        end_turn_button = QPushButton("End Turn")
+        end_turn_button.setStyleSheet("background-color: #4caf50; color: white; font-weight: bold; padding: 8px 15px;")
+        end_turn_button.clicked.connect(self.end_turn)
+        action_layout.addWidget(end_turn_button)
         
-        # Text field
-        self.word_entry = QLineEdit()
-        self.word_entry.setFont(QFont("Arial", 14))
-        self.word_entry.returnPressed.connect(self.submit_word)
-        word_entry_layout.addWidget(self.word_entry)
+        # Shuffle button
+        shuffle_button = QPushButton("Shuffle Letters")
+        shuffle_button.setStyleSheet("background-color: #2196f3; color: white; font-weight: bold; padding: 8px 15px;")
+        shuffle_button.clicked.connect(self.shuffle_letters)
+        action_layout.addWidget(shuffle_button)
         
-        # Submit button
-        submit_button = QPushButton("Submit")
-        submit_button.setStyleSheet("background-color: #4caf50; color: white; font-weight: bold; padding: 5px 10px;")
-        submit_button.clicked.connect(self.submit_word)
-        word_entry_layout.addWidget(submit_button)
+        # Reset Turn button
+        reset_button = QPushButton("Reset Turn")
+        reset_button.setStyleSheet("background-color: #f44336; color: white; font-weight: bold; padding: 8px 15px;")
+        reset_button.clicked.connect(self.reset_turn)
+        action_layout.addWidget(reset_button)
         
-        self.main_layout.addWidget(word_entry_widget)
-    
-    def _create_status_frame(self):
-        """Create the status bar at the bottom."""
+        self.main_layout.addWidget(action_widget)
+        
+    def _create_status_bar(self):
+        """Create a status bar for game messages."""
         self.statusBar = QStatusBar()
-        self.statusBar.setFont(QFont("Arial", 10))
-        self.statusBar.showMessage("Welcome to Word Mosaic!")
         self.setStatusBar(self.statusBar)
+        self.statusBar.showMessage("Ready to play!")
+        
+    def select_letter(self, letter):
+        """Handle selection of a letter from the letter bank."""
+        # If another letter was already selected, deselect it first
+        if self.selected_letter:
+            for letter_label in self.letter_labels:
+                if letter_label.letter == self.selected_letter:
+                    letter_label.set_selected(False)
+                    break
+        
+        # Update the selected letter
+        if self.selected_letter == letter:  # If clicking the same letter, deselect it
+            self.selected_letter = None
+            self.statusBar().showMessage("Letter deselected")
+        else:
+            self.selected_letter = letter
+            # Update the visual selection state
+            for letter_label in self.letter_labels:
+                if letter_label.letter == letter:
+                    letter_label.set_selected(True)
+                    self.statusBar().showMessage(f"Selected letter: {letter}")
+                    break
     
-    def show(self):
-        """Override show method to focus on word entry field"""
-        super().show()
-        self.word_entry.setFocus()
-    
-    def submit_word(self):
-        """
-        Submit the current word and calculate the score.
-        Validates the word, updates the score, and replenishes the player's hand.
-        """
-        try:
-            print("[DEBUG] Starting word submission")
-            
-            # Get the word from the text field
-            word = self.word_entry.text().strip().lower()
-            if not word:
-                self.statusBar.showMessage("Please enter a word")
-                return
-            
-            # Clear all definitions immediately when submit button is clicked
-            print("[DEBUG] Clearing definitions display")
-            self.clear_definitions()
-            print("[DEBUG] Definitions display cleared")
-            
-            # Try to play the word using the game logic
-            result = self.game.play_word(word)
-            
-            if not result['valid']:
-                self.statusBar.showMessage(f"Invalid word: {result['reason']}")
-                return
-            
-            # Word was valid and played successfully
-            # Update the score display
-            self.update_score_display()
-            
-            # Clear the word entry field
-            self.word_entry.clear()
-            
-            # Update the board and letter bank displays
-            self.update_board_display()
-            self.update_letter_bank_display()
-            
-            # Show success message
-            self.statusBar.showMessage(f"Word '{word.upper()}' played for {result['score']} points!")
-            
-            # Check if game is over
-            if self.check_game_over():
-                self.show_game_over_dialog()
-            
-        except Exception as e:
-            print(f"[ERROR] Error submitting word: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            self.statusBar.showMessage(f"Error submitting word: {str(e)}")
-
-    def shuffle_letters(self):
-        """
-        Shuffle the player's letter bank.
-        Updates the letter bank display and shows a status message.
-        """
-        # Create a player hand and shuffle it
-        player_hand = self.game.letter_bank.create_player_hand(20)
-        player_hand.fill_initial_hand()
-        player_hand.shuffle_letters()
-        
-        # Update display
-        self.update_letter_bank_display()
-        self.statusBar.showMessage("Letters shuffled")
-
-    def check_game_over(self):
-        """
-        Check if the game is over.
-        
-        Game is over when:
-        1. The letter bank is empty (no more letters to draw)
-        2. AND there are no valid placements for any letters in the player's hand
-        
-        Returns:
-            bool: True if the game is over, False otherwise
-        """
-        # For this simple implementation, just check if the letter bank is empty
-        # In a more advanced implementation, we would check for valid moves as well
-        return self.game.letter_bank.bank_empty()
-
-    def show_game_over_dialog(self):
-        """
-        Show a game over dialog with the final score and statistics.
-        """
-        from PyQt5.QtWidgets import QMessageBox
-        
-        # Create message box
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Game Over")
-        
-        # Set the game over message with statistics
-        game_over_html = f"""
-        <h2>Game Over!</h2>
-        <p>No more moves available.</p>
-        <h3>Final Score: {self.game.score}</h3>
-        <p><b>Statistics:</b></p>
-        <ul>
-            <li>Words Played: {len(self.game.played_words)}</li>
-        </ul>
-        <p>Thanks for playing Word Mosaic!</p>
-        """
-        
-        msg_box.setTextFormat(Qt.RichText)
-        msg_box.setText(game_over_html)
-        msg_box.setStandardButtons(QMessageBox.Ok)
-        msg_box.exec_()
-        
-        # Update status bar
-        self.statusBar.showMessage(f"Game Over! Final Score: {self.game.score}")
-        
-        # Disable buttons
-        for button in self.findChildren(QPushButton):
-            if button.text() in ["Submit Word", "Shuffle Letters"]:
-                button.setEnabled(False)
-
     def update_board_display(self):
-        """Update the board display to reflect the current state of the game board."""
+        """Update the board display based on the current game state."""
         for row in range(self.game.board.rows):
             for col in range(self.game.board.cols):
                 cell = self.board_cells[row][col]
-                letter = self.game.board.get_letter(row, col)
+                letter = self.game.board.board[row][col]
                 
-                if letter:
-                    cell.setText(letter)
-                    # Highlight special tiles
-                    if (row, col) in self.game.board.special_tiles:
-                        tile_type = self.game.board.special_tiles[(row, col)]
-                        if tile_type == 'TW':
-                            cell.setStyleSheet("background-color: #ff6666; border: 2px solid #c0c0c0;")
-                        elif tile_type == 'DW':
-                            cell.setStyleSheet("background-color: #ff9999; border: 2px solid #c0c0c0;")
-                        elif tile_type == 'TL':
-                            cell.setStyleSheet("background-color: #66b3ff; border: 2px solid #c0c0c0;")
-                        elif tile_type == 'DL':
-                            cell.setStyleSheet("background-color: #99ccff; border: 2px solid #c0c0c0;")
-                    else:
-                        cell.setStyleSheet("background-color: #ffffff; border: 2px solid #c0c0c0;")
-                else:
+                # For blank tiles, display nothing (not '0')
+                if letter == '0':
                     cell.setText("")
-                    # Show special tiles
-                    if (row, col) in self.game.board.special_tiles:
-                        tile_type = self.game.board.special_tiles[(row, col)]
-                        if tile_type == 'TW':
-                            cell.setStyleSheet("background-color: #ff6666; border: 2px solid #c0c0c0;")
-                        elif tile_type == 'DW':
-                            cell.setStyleSheet("background-color: #ff9999; border: 2px solid #c0c0c0;")
-                        elif tile_type == 'TL':
-                            cell.setStyleSheet("background-color: #66b3ff; border: 2px solid #c0c0c0;")
-                        elif tile_type == 'DL':
-                            cell.setStyleSheet("background-color: #99ccff; border: 2px solid #c0c0c0;")
+                    cell.score_label.setText("")
+                else:
+                    cell.setText(letter)
+                    # If the cell has a letter, show its score value in the corner
+                    if letter:
+                        score = self.game.letter_bank.get_letter_value(letter.lower()) if letter else ""
+                        cell.score_label.setText(str(score))
                     else:
-                        cell.setStyleSheet("background-color: #ffffff; border: 2px solid #c0c0c0;")
-
+                        cell.score_label.setText("")
+    
     def update_letter_bank_display(self):
-        """Update the letter bank display with the current available letters."""
-        # Clear existing letter bank layout
+        """Update the letter bank display with current available letters."""
+        # Clear current letters
         while self.letter_bank_layout.count():
             item = self.letter_bank_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-                
-        # Get the player's letter bank
-        player_hand = self.game.letter_bank.create_player_hand(20)
-        player_hand.fill_initial_hand()
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
         
-        # Add letters to the display
-        for letter in player_hand.letter_order:
-            letter_label = QLabel(letter.upper())
-            letter_label.setFixedSize(30, 30)
-            letter_label.setAlignment(Qt.AlignCenter)
-            letter_label.setFont(QFont("Arial", 14, QFont.Bold))
-            letter_label.setStyleSheet("background-color: #ffd700; border: 1px solid #c0c0c0; border-radius: 4px;")
+        # Get available letters from the game
+        available_letters = self.game.letter_bank.get_available_letters()
+        
+        # Create new letter labels
+        self.letter_labels = []
+        for letter in available_letters:
+            # Show blank tiles as empty but still selectable
+            display_letter = letter if letter != '0' else " "
+            letter_value = self.game.letter_bank.get_letter_value(letter)
+            
+            letter_label = DraggableLetterLabel(letter, letter_value)
+            letter_label.setText(display_letter)
+            letter_label.clicked.connect(self.select_letter)
+            
+            # If this letter is currently selected, mark it
+            if self.selected_letter == letter:
+                letter_label.set_selected(True)
+            
             self.letter_bank_layout.addWidget(letter_label)
-
+            self.letter_labels.append(letter_label)
+    
     def update_score_display(self):
-        """Update the score display with the current score."""
+        """Update the score display."""
         self.score_label.setText(f"Score: {self.game.score}")
-
-    def clear_definitions(self):
-        """Clear the definitions display."""
-        # In a real implementation, this would clear a text display area for definitions
-        pass
     
-    def refresh_board(self):
-        """Refresh the board display."""
-        self.update_board_display()
-    
-    def refresh_letter_bank(self):
-        """Refresh the letter bank display."""
+    def end_turn(self):
+        """End the current turn and process the words formed."""
+        if not self.current_turn_tiles:
+            self.statusBar().showMessage("No letters placed this turn")
+            return
+            
+        # Get all words formed
+        words = self.game.board.get_all_words()
+        valid_words = []
+        invalid_words = []
+        
+        for word, positions in words:
+            if len(word) > 1:  # Only consider words with at least 2 letters
+                if self.game.word_validator.validate_word(word):
+                    valid_words.append((word, positions))
+                else:
+                    invalid_words.append(word)
+        
+        if invalid_words:
+            QMessageBox.warning(self, "Invalid Words", 
+                f"The following words are not valid: {', '.join(invalid_words)}\n\nPlease try again.")
+            return
+        
+        # Ask the player if they want to continue iterating or submit their turn
+        if valid_words:
+            # Show preview of formed words and score
+            preview_text = "Words formed:\n"
+            turn_score = 0
+            for word, positions in valid_words:
+                word_score = self.game.scoring.calculate_word_score(word, positions)
+                turn_score += word_score
+                preview_text += f"- {word} ({word_score} points)\n"
+            preview_text += f"\nTotal score this turn: {turn_score}"
+            
+            reply = QMessageBox.question(self, 'Continue to iterate?', 
+                                        preview_text + '\n\nDo you want to continue modifying your turn?',
+                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                
+            if reply == QMessageBox.Yes:
+                # Player wants to continue modifying - keep the current state
+                self.statusBar().showMessage("Continue placing or modifying letters")
+                return
+            
+        # Continue with turn submission - calculate score for valid words
+        turn_score = 0
+        for word, positions in valid_words:
+            word_score = self.game.scoring.calculate_word_score(word, positions)
+            turn_score += word_score
+            self.statusBar().showMessage(f"Word '{word}' scores {word_score} points!")
+            
+        self.game.score += turn_score
+        self.update_score_display()
+        
+        # Add words to played words list
+        for word, _ in valid_words:
+            if word not in self.game.played_words:
+                self.game.played_words.append(word)
+        
+        # Clear the current turn's tiles
+        self.current_turn_tiles = []
+        
+        # Refill the player's hand
+        self.game.letter_bank.refill_hand()
         self.update_letter_bank_display()
+        
+        # Show turn completion message
+        if valid_words:
+            QMessageBox.information(self, "Turn Complete", 
+                f"Turn complete! You scored {turn_score} points.")
+        else:
+            QMessageBox.information(self, "Turn Complete", 
+                "Turn complete, but no valid words were formed.")
+    
+    def shuffle_letters(self):
+        """Shuffle the letters in the player's hand."""
+        if self.game.letter_bank.player_hand.shuffle_letters():
+            self.update_letter_bank_display()
+            self.statusBar().showMessage("Letters shuffled!")
+        else:
+            self.statusBar().showMessage("No letters to shuffle!")
+    
+    def reset_turn(self):
+        """Reset the current turn, returning all placed letters to the hand."""
+        if not self.current_turn_tiles:
+            self.statusBar().showMessage("No letters placed this turn")
+            return
+            
+        # Remove letters from the board and return them to the player's hand
+        for row, col, letter in self.current_turn_tiles:
+            # Remove letter from board
+            self.game.board.clear_position(row, col)
+            
+            # Return letter to player's hand
+            self.game.letter_bank.add_letter(letter)
+        
+        # Clear the current turn's tiles
+        self.current_turn_tiles = []
+        
+        # Update displays
+        self.update_board_display()
+        self.update_letter_bank_display()
+        
+        self.statusBar().showMessage("Turn reset!")
+    
+    def _check_for_words(self):
+        """Check if any words have been formed with the placed letters."""
+        words = self.game.board.get_all_words()
+        for word, positions in words:
+            if len(word) > 1:  # Only consider words with at least 2 letters
+                # Validate the word
+                if self.game.word_validator.validate_word(word):
+                    word_score = self.game.scoring.calculate_word_score(word, positions)
+                    self.statusBar().showMessage(f"Formed valid word: '{word}' for {word_score} points")
+                else:
+                    self.statusBar().showMessage(f"Warning: '{word}' is not a valid word")
     
     def new_game(self):
         """Start a new game."""
@@ -414,11 +592,10 @@ class WordMosaicApp(QMainWindow):
         self.update_board_display()
         self.update_letter_bank_display()
         self.update_score_display()
-        self.statusBar.showMessage("New game started!")
+        self.statusBar().showMessage("New game started!")
         
     def show_high_scores(self):
         """Show high scores dialog."""
-        # Placeholder implementation
         QMessageBox.information(self, "High Scores", "High scores feature coming soon!")
         
     def change_dictionary(self, dictionary_type):
@@ -436,7 +613,7 @@ class WordMosaicApp(QMainWindow):
             self.dictionary_actions[1].setChecked(True)
             
         self.dictionary_label.setText(f"Dictionary: {self.game.word_validator.dictionary_name}")
-        self.statusBar.showMessage(f"Switched to {info.get('name', dictionary_type)} dictionary.")
+        self.statusBar().showMessage(f"Switched to {info.get('name', dictionary_type)} dictionary.")
         
     def show_rules(self):
         """Show game rules."""

@@ -108,16 +108,18 @@ class Game:
         return f"Definition for '{word}' (placeholder)"
 
 def main():
-    """Main entry point for Word Mosaic game"""
-    initialize_databases()
-    app = QApplication(sys.argv)
+    """
+    Main entry point for the Word Mosaic game
+    """
+    # Initialize the game
     game = Game()
+    
+    # Initialize the GUI
+    app = QApplication(sys.argv)
     window = WordMosaicApp(game)
-    
-    # Clear definitions after each turn
-    window.clear_definitions()
-    
     window.show()
+    
+    # Start the application event loop
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
