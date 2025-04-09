@@ -52,7 +52,6 @@
 - [ ] Implement game-over detection (no valid placements + empty bank)
 - [X] Create final scoring calculation
 - [ ] Design game summary/statistics display
-- [ ] Implement replay option
 
 ## 🧪 Testing
 - [X] Create unit tests for core game logic

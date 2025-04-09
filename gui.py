@@ -289,6 +289,9 @@ class WordMosaicApp(QMainWindow):
         # Track tiles placed in the current turn
         self.current_turn_tiles = []
         
+        # Track game over state
+        self.is_game_over = False
+        
         # Create central widget and layout
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -682,6 +685,10 @@ class WordMosaicApp(QMainWindow):
         """
         try:
             print("=== Starting word submission ===")
+            
+            # Clear all definitions immediately when submit button is clicked
+            self.definitions_content.clear()
+            
             # Get the words formed during the turn
             words_formed = self.game_board.get_all_words()  # List of (word, positions) tuples
             print(f"Words formed: {words_formed}")  # Debugging statement
@@ -739,9 +746,8 @@ class WordMosaicApp(QMainWindow):
             for letter in letters_to_return:
                 self.player_hand.add_letter(letter.lower())  # Use lowercase for consistency
 
-            # If letters were returned to the player's hand, clear all definitions
+            # If letters were returned to the player's hand, refresh display and return
             if letters_to_return:
-                self.definitions_content.clear()
                 self.refresh_board()
                 self.refresh_letter_bank()
                 return
@@ -762,9 +768,6 @@ class WordMosaicApp(QMainWindow):
             print(f"Updated total score: {self.score}")
             self.score_value.setText(str(self.score))
             print(f"Score display updated to: {self.score_value.text()}")
-
-            # Clear previous definitions
-            self.definitions_content.clear()
             
             # Get definitions for the words in this turn only
             from dictionary_api import format_definitions
@@ -802,6 +805,11 @@ class WordMosaicApp(QMainWindow):
             print(f"Setting status message: Turn completed! Score: {turn_score}")
             self.status_bar.showMessage(f"Turn completed! Score: {turn_score}")
             print("=== Word submission completed ===")
+            
+            # Check if the game is over after this turn
+            if self.check_game_over():
+                print("Game over detected!")
+                self.show_game_over_dialog()
 
         except Exception as e:
             print(f"Error submitting word: {str(e)}")
@@ -817,6 +825,117 @@ class WordMosaicApp(QMainWindow):
         self.player_hand.shuffle_letters()
         self.refresh_letter_bank()
         self.status_bar.showMessage("Letters shuffled")
+
+    def check_game_over(self):
+        """
+        Check if the game is over.
+        
+        Game is over when:
+        1. The letter bank is empty (no more letters to draw)
+        2. AND there are no valid placements for any letters in the player's hand
+        
+        Returns:
+            bool: True if the game is over, False otherwise
+        """
+        # If already in game over state, return True
+        if self.is_game_over:
+            return True
+            
+        # First check if letter bank is empty
+        if not self.letter_bank.bank_empty():
+            return False  # Still has letters in the bank
+        
+        # Get the player's current letters
+        player_letters = self.player_hand.letter_order
+        
+        if not player_letters:
+            # No letters in hand and bank is empty - game over
+            self.is_game_over = True
+            return True
+            
+        # Check if there are any valid placements for the player's letters
+        has_valid_moves = False
+        for letter in player_letters:
+            # Check all potentially valid positions
+            for row in range(self.game_board.rows):
+                for col in range(self.game_board.cols):
+                    if not self.game_board.is_occupied(row, col) and self.game_board.has_adjacent_letter(row, col):
+                        # This is a valid position to place a letter - check if it forms valid words
+                        try:
+                            # Temporarily place the letter
+                            self.game_board.place_letter(letter, row, col)
+                            
+                            # Get all words formed by this placement
+                            words_formed = self.game_board.get_all_words()
+                            
+                            # Check if any of the words formed are valid
+                            for word, _ in words_formed:
+                                if self.game_board.validate_word(word):
+                                    has_valid_moves = True
+                                    break
+                                    
+                            # Remove the temporary letter
+                            self.game_board.clear_position(row, col)
+                            
+                            if has_valid_moves:
+                                return False  # Found a valid move, game is not over
+                        except ValueError:
+                            # Invalid placement, continue checking other positions
+                            continue
+                            
+        # No valid moves found and letter bank is empty - game over
+        self.is_game_over = True
+        return True
+
+    def show_game_over_dialog(self):
+        """
+        Show a game over dialog with the final score and statistics.
+        """
+        from PyQt5.QtWidgets import QMessageBox
+        
+        # Calculate board coverage
+        board_coverage = round(self.game_board.calculate_coverage(), 1)
+        
+        # Get all words formed on the board
+        all_words = self.game_board.get_all_words()
+        word_count = len(all_words)
+        
+        # Calculate longest word
+        longest_word = ""
+        for word, _ in all_words:
+            if len(word) > len(longest_word):
+                longest_word = word
+        
+        # Create message box
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Game Over")
+        
+        # Set the game over message with statistics
+        game_over_html = f"""
+        <h2>Game Over!</h2>
+        <p>No more moves available.</p>
+        <h3>Final Score: {self.score}</h3>
+        <p><b>Statistics:</b></p>
+        <ul>
+            <li>Board Coverage: {board_coverage}%</li>
+            <li>Words Placed: {word_count}</li>
+            <li>Longest Word: {longest_word.upper()} ({len(longest_word)} letters)</li>
+        </ul>
+        <p>Thanks for playing Word Mosaic!</p>
+        """
+        
+        msg_box.setTextFormat(Qt.RichText)
+        msg_box.setText(game_over_html)
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec_()
+        
+        # Update status bar
+        self.status_bar.showMessage(f"Game Over! Final Score: {self.score}")
+        
+        # Disable buttons
+        for button in self.findChildren(QPushButton):
+            if button.text() in ["Submit Word", "Shuffle Letters"]:
+                button.setEnabled(False)
 
 # Main application entry point
 if __name__ == "__main__":
