@@ -475,76 +475,50 @@ class WordMosaicApp(QMainWindow):
         if not self.current_turn_tiles:
             self.status_bar.showMessage("No letters placed this turn")
             return
-            
+
         # Get all words formed
         words = self.game.board.get_all_words()
         valid_words = []
         invalid_words = []
-        
+
         for word, positions in words:
             if len(word) > 1:  # Only consider words with at least 2 letters
                 if self.game.word_validator.validate_word(word):
                     valid_words.append((word, positions))
                 else:
                     invalid_words.append(word)
-        
+
         if invalid_words:
             QMessageBox.warning(self, "Invalid Words", 
                 f"The following words are not valid: {', '.join(invalid_words)}\n\nPlease try again.")
             return
-        
-        # Ask the player if they want to continue iterating or submit their turn
-        if valid_words:
-            # Show preview of formed words and score
-            preview_text = "Words formed:\n"
-            turn_score = 0
-            for word, positions in valid_words:
-                word_score = self.game.scoring.calculate_word_score(word, positions)
-                turn_score += word_score
-                preview_text += f"- {word} ({word_score} points)\n"
-            preview_text += f"\nTotal score this turn: {turn_score}"
-            
-            reply = QMessageBox.question(self, 'Continue to iterate?', 
-                                        preview_text + '\n\nDo you want to continue modifying your turn?',
-                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                
-            if reply == QMessageBox.Yes:
-                # Player wants to continue modifying - keep the current state
-                self.status_bar.showMessage("Continue placing or modifying letters")
-                return
-            
-        # Continue with turn submission - calculate score for valid words
+
+        # Display words formed and their scores
         turn_score = 0
+        words_summary = "Words formed this turn:\n"
         for word, positions in valid_words:
             word_score = self.game.scoring.calculate_word_score(word, positions)
             turn_score += word_score
-            self.status_bar.showMessage(f"Word '{word}' scores {word_score} points!")
-            
+            words_summary += f"- {word}: {word_score} points\n"
+
+        words_summary += f"\nTotal score this turn: {turn_score}"
+        self.status_bar.showMessage(words_summary)
+
+        # Update game state
         self.game.score += turn_score
         self.update_score_display()
-        
+
         # Add words to played words list
         for word, _ in valid_words:
             if word not in self.game.played_words:
                 self.game.played_words.append(word)
-        
+
         # Clear the current turn's tiles
         self.current_turn_tiles = []
-        
-        # Prevent further modifications after ending the turn
-        self.current_turn_tiles = []
-        
+
         # Refill the player's hand
         self.game.letter_bank.refill_hand()
         self.update_letter_bank_display()
-        
-        # Show turn completion message
-        if valid_words:
-            QMessageBox.information(self, "Turn Complete", 
-                f"Turn complete! You scored {turn_score} points.")
-        else:
-            QMessageBox.information(self, "Turn Complete", 
-                "Turn complete, but no valid words were formed.")
     
     def shuffle_letters(self):
         """Shuffle the letters in the player's hand."""
