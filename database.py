@@ -80,7 +80,26 @@ def create_database(txt_file="dictionary.txt", db_file="dictionary.db"):
     print(f"Dictionary database created with {db_word_count} words")
     return db_word_count
 
+def add_definition_column():
+    """
+    Add a 'definition' column to the dictionary table if it doesn't exist.
+    """
+    conn = sqlite3.connect("dictionary.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE dictionary ADD COLUMN definition TEXT")
+        conn.commit()
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" in str(e).lower():
+            print("[DEBUG] 'definition' column already exists.")
+        else:
+            raise
+    finally:
+        conn.close()
+
 # Run if this file is executed directly
 if __name__ == "__main__":
+    # Ensure the 'definition' column exists
+    add_definition_column()
     create_database()
 

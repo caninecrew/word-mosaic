@@ -123,6 +123,25 @@ class WordValidator:
         # Try to get definition from Merriam-Webster API
         return self.mw_api.get_definition(word)
 
+    def get_definition_from_local(self, word):
+        """
+        Retrieve the definition of a word from the local SQLite database.
+
+        Args:
+            word (str): The word to retrieve the definition for.
+
+        Returns:
+            str: The definition if found, or None if not found.
+        """
+        try:
+            self.cursor.execute("SELECT definition FROM dictionary WHERE word = ?", (word.lower(),))
+            result = self.cursor.fetchone()
+            if result:
+                return result[0]
+        except sqlite3.Error as e:
+            print(f"SQLite error while retrieving definition: {e}")
+        return None
+
     def get_definition_from_merriam_webster(self, word):
         """
         Retrieve the definition of a word from the Merriam-Webster dictionary database.
