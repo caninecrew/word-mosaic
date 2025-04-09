@@ -380,12 +380,6 @@ class WordMosaicApp(QMainWindow):
         shuffle_button.clicked.connect(self.shuffle_letters)
         action_layout.addWidget(shuffle_button)
         
-        # Reset Turn button
-        reset_button = QPushButton("Reset Turn")
-        reset_button.setStyleSheet("background-color: #f44336; color: white; font-weight: bold; padding: 8px 15px;")
-        reset_button.clicked.connect(self.reset_turn)
-        action_layout.addWidget(reset_button)
-        
         self.main_layout.addWidget(action_widget)
         
     def _create_status_bar(self):
@@ -546,29 +540,6 @@ class WordMosaicApp(QMainWindow):
             self.status_bar.showMessage("Letters shuffled!")
         else:
             self.status_bar.showMessage("No letters to shuffle!")
-    
-    def reset_turn(self):
-        """Reset the current turn, returning all placed letters to the hand."""
-        if not self.current_turn_tiles:
-            self.status_bar.showMessage("No letters placed this turn")
-            return
-            
-        # Remove letters from the board and return them to the player's hand
-        for row, col, letter in self.current_turn_tiles:
-            # Remove letter from board
-            self.game.board.clear_position(row, col)
-            
-            # Return letter to player's hand
-            self.game.letter_bank.add_letter(letter)
-        
-        # Clear the current turn's tiles
-        self.current_turn_tiles = []
-        
-        # Update displays
-        self.update_board_display()
-        self.update_letter_bank_display()
-        
-        self.status_bar.showMessage("Turn reset!")
     
     def _check_for_words(self):
         """Check if any words have been formed with the placed letters."""
